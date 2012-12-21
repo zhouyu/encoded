@@ -14,3 +14,5 @@ parts/
 src/encoded/static/css/bootstrap.css
 src/encoded/static/css/responsive.css
 src/encoded/static/scss/_variables.original.scss
+.project
+.pydevproject
