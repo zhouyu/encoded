@@ -7,6 +7,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.rst')).read()
 
 requires = [
     'SQLAlchemy',
+    'psycopg2',
     'pyramid',
     'pyramid_tm',
     'setuptools',

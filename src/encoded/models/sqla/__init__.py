@@ -1,13 +1,8 @@
-from model_sqla.config import DBUSER, DBTYPE, DBPASS, DBHOST, DBNAME
-from sqlalchemy.engine import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Column
 from sqlalchemy.types  import String, Boolean, DateTime
 
 Base = declarative_base()
-metadata = MetaData()
-engine = create_engine("%s://%s:%s@%s/%s" % (DBTYPE, DBUSER, DBPASS, DBHOST, DBNAME), convert_unicode=True, pool_recycle=3600)
 
 
 def subclasses(cls):
