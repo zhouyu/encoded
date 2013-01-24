@@ -4,6 +4,7 @@ from sqlalchemy.types  import String, Boolean, DateTime
 
 Base = declarative_base()
 
+__all__ = ['biosample', 'organism', 'source', 'protocol']
 
 def subclasses(cls):
     return map(lambda x: x.__mapper_args__['polymorphic_identity'], cls.__subclasses__())
@@ -21,7 +22,7 @@ class CommonEqualityMixin(object):
         return not self.__eq__(other)
 
 
-class ENCODEdTable(Base):
+class ENCODEdTable(object):
     ''' All tables in ENCODEd have these fields '''
 
     date_created = Column('date_created', DateTime, nullable=False)

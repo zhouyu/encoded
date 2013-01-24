@@ -3,14 +3,13 @@ Created on Dec 18, 2012
 Adopted from sgd2 Biorelation by kpaskov
 @author: hitz
 '''
-from models.sqla import ENCODEdTable, CommonEqualityMixin
-import models.sqla.protocol
+from . import Base, ENCODEdTable, CommonEqualityMixin
 from sqlalchemy.orm import relationship
-from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy.schema import Table, Column, ForeignKey
 from sqlalchemy.types import Integer, String, Date, Float, Enum, Boolean
 
 
-class Biosample(ENCODEdTable, CommonEqualityMixin):
+class Biosample(Base, ENCODEdTable, CommonEqualityMixin):
     ''' doc string for lintness'''
 
     __tablename__ = "biosample"
@@ -23,14 +22,14 @@ class Biosample(ENCODEdTable, CommonEqualityMixin):
     submitted_by = Column('submitted_by', String, nullable=False)
 
     ''' should below be CV tables?  Don't have to load the whole thing '''
-    ontology = Column('ontology', Enum('UBERON', 'CLO', 'EFO'),
-        nullable=False)
+    ontology = Column('ontology', Enum('UBERON', 'CLO', 'EFO',
+        name='ontologies'), nullable=False)
     ontology_id = Column('ontology_id', String, nullable=False)
     ontology_term = Column('ontology_term', String, nullable=False)
 
     source = relationship('Source', uselist=False)
 
-    treatments = relationship('Treatment', secondary=biosample_treatment,
+    treatments = relationship('Treatment', secondary='biosample_treatment',
         backref='biosamples')
     ## any Biosample can be chemically treated
 
@@ -57,7 +56,7 @@ class Biosample(ENCODEdTable, CommonEqualityMixin):
 
 class CellLine(Biosample):
     __tablename__ = 'cell_line'
-    id = Column(Integer, ForeignKey('biosample.biosample_id'), primaryKey=True)
+    id = Column('biosample_id', Integer, ForeignKey('biosample.biosample_id'), primary_key=True)
 
     organism_id = Column(Integer, ForeignKey('organism.organism_id'))
     organism = relationship('Organism', uselist=False, backref='cell_line')
@@ -78,11 +77,11 @@ class CellLine(Biosample):
 class Tissue(Biosample):
     ''' includes "whole mouse" which will typically have transfection construct/treatment'''
     __tablename__ = 'tissue'
-    id = Column(Integer, ForeignKey('biosample.biosample_id'), primaryKey=True)
+    id = Column('biosample_id', Integer, ForeignKey('biosample.biosample_id'), primary_key=True)
 
     date_obtained = Column('date_obtained', Date, nullable=False)
-    donor_id = Column(Integer, ForeignKey('human_donor.id'))
-    donor = relationship('HumanDonor', useList=False, backref='tissues')
+    donor_id = Column(Integer, ForeignKey('human_donor.donor_id'))
+    donor = relationship('HumanDonor', uselist=False, backref='tissues')
     ''' this doesn't handle mouse right at all!!! '''
 
     extraction_protocol_id = Column(Integer, ForeignKey('protocol.protocol_id'))
@@ -97,9 +96,9 @@ class SingleCell(Tissue):
 
     ''' is this too deep? '''
     __tablename__ = 'single_cell'
-    id = Column(Integer, ForeignKey('tissue.id'), primaryKey=True)
+    id = Column('biosample_id', Integer, ForeignKey('tissue.biosample_id'), primary_key=True)
 
-    validation_documents = relationship('Document')  ## unspec'd many-to-many!
+    validation_documents = relationship('Document')  # unspec'd many-to-many!
 
     purification_protocol_id = Column(Integer, ForeignKey('protocol.protocol_id'))
     purification_protocol = relationship('Protocol', primaryjoin=
@@ -117,11 +116,11 @@ class SingleCell(Tissue):
 class IPStemCellLine(CellLine):
 
     __tablename__ = 'ipstemcell_line'
-    id = Column(Integer, ForeignKey('cell_line.id'), primaryKey=True)
+    id = Column('biosample_id', Integer, ForeignKey('cell_line.biosample_id'), primary_key=True)
 
     derived_from = relationship('BiosampleRelation',
-        primaryJoin=BiosampleRel.related_biosample_id==Biosample.id,
-        useList=False,
+        primaryjoin='BiosampleRel.related_biosample_id==Biosample.id',
+        uselist=False,
         )
 
     __mapper_args__ = {'polymorphic_identity': "Induced Pluripotent Stem Cell"}
@@ -130,35 +129,40 @@ class IPStemCellLine(CellLine):
         protocol from CellLine, inherits donor '''
 
 
-class BiosampleRel(ENCODEdTable):
+class BiosampleRel(Base, ENCODEdTable):
 
     __tablename__ = 'biosample_relationship'
-    id = Column('biosample_rel_id', Integer, PrimaryKey=True)
+    id = Column('biosample_rel_id', Integer, primary_key=True)
     type = Column('biosample_type', String)
-    biosample_id = Column(Integer, ForeignKey('biosample.id'))
-    related_biosample_id = Column(Integer, ForeignKey('biosample.id'))
+    biosample_id = Column(Integer, ForeignKey('biosample.biosample_id'))
+    related_biosample_id = Column(Integer, ForeignKey('biosample.biosample_id'))
 
 
-## this could also use the Association object pattern from SQLA
-biosample_treatment = Table('biosample_treatment', Base.metadata,
-    Column('biosample_id', Integer, ForeignKey('biosample.biosample_id')),
-    Column('treatment_id', Integer, ForeignKey('treatment.treatment_id')))
-)
-
-class Treatment(ENCODEdTable):
+class Treatment(Base, ENCODEdTable):
     ''' Assuming we are only using Chemical treatments in ChEBI
         This may be an unwarrented assumptions in which case we will
         have to add an Ontology/CV foreign key instead, or else break
         this into "chemical" treatments and "other" treatments '''
 
     __tablename__ = 'treatment'
-    id = Column('treatment_id', Integer, PrimaryKey=true)
+    id = Column('treatment_id', Integer, primary_key=True)
     name = Column('treatment_name', String, nullable=False)
     chebi_id = Column('chebi_id', String, nullable=False)
     concentration = Column('concentration', Float)
-    concentration_units = Column('concentration_units', Enum)
+    concentration_units = Column('concentration_units', Enum(
+        'mM','uM','nM','pm','mg/ml','ug/ml','ng/ml','U/ml','percent',
+        name='conc_units'))
     duration = Column('duration', Float)
-    duration_units = Column('duration_units', Enum)
+    duration_units = Column('duration_units', Enum('s','m','hr','d',
+        name='time_units'))
+    # duration/duration_units could also be a DateTime or Interval obj.
 
     submitted_by = Column('submitted_by', String, nullable=False)
+
+
+## this could also use the Association object pattern from SQLA
+biosample_treatment = Table('biosample_treatment', Base.metadata,
+    Column('biosample_id', Integer, ForeignKey('biosample.biosample_id')),
+    Column('treatment_id', Integer, ForeignKey('treatment.treatment_id')))
+
 
