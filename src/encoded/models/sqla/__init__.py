@@ -27,4 +27,5 @@ class ENCODEdTable(object):
 
     date_created = Column('date_created', DateTime, nullable=False)
     created_by = Column('created_by', String, nullable=False)
+    ## created_by is foreign key to colleague?
     is_current = Column('is_current', Boolean, nullable=False)
