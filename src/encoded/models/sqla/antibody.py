@@ -20,7 +20,7 @@ class Antibody(Base, ENCODEdTable):
     submitted_by = Column('submitted_by', String, nullable=False)
     isotype = Column('isotype', String)
     clonality = Column('clonality',
-        Enum('monoclonal', 'polyclonal', name=antibody_clonality))
+        Enum('monoclonal', 'polyclonal', name='antibody_clonality'))
     purification = Column('purification', String)
     antigen_description = Column('antigen_description', String)
     epitope = Column('epitope', String)
@@ -45,9 +45,10 @@ class Modification(Base, ENCODEdTable):
     __tablename__ = 'modification'
 
     id = Column('modification_id', Integer, primary_key=True)
-    type = Column('modification_type', nullable=False,
+    type = Column('modification_type',
         Enum('fusion', 'acetylation', 'phosphoryation', 'ubiquitinylation',
-        'monomethlyation', 'dimethylation', 'trimethlyation'))
+        'monomethlyation', 'dimethylation', 'trimethlyation',
+        name='modification_types'), nullable=False)
     ''' should fusion be specific or general '''
     position = Column('position', Integer)
     residue = Column('residue', Enum('E', 'K', 'R', 'D', 'S', 'T', 'C', 'H',
@@ -65,19 +66,20 @@ class Validation(Base, ENCODEdTable):
     __tablename__ = 'validation'
 
     id = Column('validation_id', Integer, primary_key=True)
-    type = Column('validation_type', nullable=False,
-        Enum('antibody'), name='validation_types')
+    type = Column('validation_type',
+        Enum('antibody', name='validation_types'), nullable=False)
     # above is a place holder for further validation types
     # this will require some subclassing
 
-    method = Column('method', nullable=False,
+    method = Column('method',
         Enum('ENCODE2', 'To be added',  # special autovalidation)
         'Immunoflurescense', 'Immunoprecipitation', 'Western Blot',
-        'Correlation', 'Mass-Spec', name='antibody_validation_methods'))
+        'Correlation', 'Mass-Spec', name='antibody_validation_methods'),
+        nullable=False)
     document_id = Column('document_id', ForeignKey('document.document_id'))
-    status = Column('validation_status', nullable=False,
-        Enum('submitted', 'needs_review', 'approved', 'rejected'),
-        name='validation_states')
+    status = Column('validation_status',
+        Enum('submitted', 'needs_review', 'approved', 'rejected',
+        name='validation_states'), nullable=False)
     reviewer = Column('reviewer', String)  # FK to Colleague????
     antibody_id = Column('antibody_id', ForeignKey('antibody.antibody_id'))
     ## ug this would be shRNA by type unless we subclass

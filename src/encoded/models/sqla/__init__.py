@@ -4,7 +4,8 @@ from sqlalchemy.types  import String, Boolean, DateTime
 
 Base = declarative_base()
 
-__all__ = ['biosample', 'organism', 'source', 'protocol']
+__all__ = ['biosample', 'organism', 'source', 'protocol', 'antibody']
+
 
 def subclasses(cls):
     return map(lambda x: x.__mapper_args__['polymorphic_identity'], cls.__subclasses__())
