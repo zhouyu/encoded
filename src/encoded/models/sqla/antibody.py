@@ -3,10 +3,10 @@ Created on Jan 24, 2013
 @author: hitz
 '''
 
-from . import Base, ENCODEdTable, CommonEqualityMixin
+from . import Base, ENCODEdTable
 from sqlalchemy.orm import relationship
-from sqlalchemy.schema import Table, Column, ForeignKey
-from sqlalchemy.types import Integer, String, Date, Float, Enum, Boolean
+from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy.types import Integer, String, Enum
 
 
 class Antibody(Base, ENCODEdTable):
@@ -14,6 +14,7 @@ class Antibody(Base, ENCODEdTable):
     __tablename__ = 'antibody'
 
     id = Column('antibody_id', Integer, primary_key=True)
+    accession = Column('antibody_accession', String, nullable=False)
     source_id = Column('source_id', Integer, ForeignKey('source.source_id'))
     product_id = Column('product_id', String, nullable=False)
     lot_id = Column('lot_id', String)
@@ -34,10 +35,15 @@ class Target(Base, ENCODEdTable):
 
     id = Column('target_id', Integer, primary_key=True)
     label = Column('target_label', String, nullable=False)
+    label_stem = Column('lable_stem', String)
     symbol = Column('symbol', String, nullable=False)
     organism_id = Column('organism_id', ForeignKey('organism.organism_id'),
         nullable=False)
-    target_class = Column('target_class', String)  ## GO Molecular Function SLIM
+    target_class = Column('target_class', String)  # GO Molecular Function SLIM
+    modification_id = Column('modification_id', Integer,
+        ForeignKey('modification.modification_id'))  # nullable FK
+
+    modification = relationship('Modification', uselist=False)
 
 
 class Modification(Base, ENCODEdTable):
@@ -46,7 +52,7 @@ class Modification(Base, ENCODEdTable):
 
     id = Column('modification_id', Integer, primary_key=True)
     type = Column('modification_type',
-        Enum('fusion', 'acetylation', 'phosphoryation', 'ubiquitinylation',
+        Enum('GFP-fusion', 'acetylation', 'phosphoryation', 'ubiquitinylation',
         'monomethlyation', 'dimethylation', 'trimethlyation',
         name='modification_types'), nullable=False)
     ''' should fusion be specific or general '''
@@ -54,11 +60,19 @@ class Modification(Base, ENCODEdTable):
     residue = Column('residue', Enum('E', 'K', 'R', 'D', 'S', 'T', 'C', 'H',
         name='modifiable_amino_acids'))
 
+    def _create_label(self):
 
-## this could also use the Association object pattern from SQLA
-target_modification = Table('target_modification', Base.metadata,
-    Column('target_id', Integer, ForeignKey('target.target_id')),
-    Column('modification_id', Integer, ForeignKey('modification.modification_id')))
+        short_types = {
+            'GFP-fusion': '-GFP',
+            'acetylation': 'ac',
+            'phosphorylation': 'P',
+            'ubquitnylation': '-Ubi',
+            'monomethylation': 'me',
+            'dimethylation': 'me2',
+            'trimethylation': 'me3'
+        }
+
+        return str(self.position + self.residue + short_types[self.type])
 
 
 class Validation(Base, ENCODEdTable):
@@ -66,23 +80,30 @@ class Validation(Base, ENCODEdTable):
     __tablename__ = 'validation'
 
     id = Column('validation_id', Integer, primary_key=True)
-    type = Column('validation_type',
-        Enum('antibody', name='validation_types'), nullable=False)
-    # above is a place holder for further validation types
-    # this will require some subclassing
+    antibody_id = Column('antibody_id', ForeignKey('antibody.antibody_id'),
+        nullable=False)
+    target_id = Column('target_id', Integer, ForeignKey('target.target_id'),
+        nullable=False)
+    status = Column('validation_status', Enum('validated', 'not validated',
+        'invalid', name='validation_states'))
 
+    documents = relationship('ValidationDocument', backref='validation')
+
+
+class ValidationDocument(Base, ENCODEdTable):
+
+    __tablename__ = 'validation_document'
+
+    id = Column('validation_document_id', Integer, primary_key=True)
     method = Column('method',
         Enum('ENCODE2', 'To be added',  # special autovalidation)
         'Immunoflurescense', 'Immunoprecipitation', 'Western Blot',
         'Correlation', 'Mass-Spec', name='antibody_validation_methods'),
         nullable=False)
     document_id = Column('document_id', ForeignKey('document.document_id'))
-    status = Column('validation_status',
-        Enum('submitted', 'needs_review', 'approved', 'rejected',
-        name='validation_states'), nullable=False)
-    reviewer = Column('reviewer', String)  # FK to Colleague????
-    antibody_id = Column('antibody_id', ForeignKey('antibody.antibody_id'))
-    ## ug this would be shRNA by type unless we subclass
-    target_id = Column('target_id', Integer, ForeignKey('target.target_id'))
+    status = Column('review_status',
+        Enum('submitted', 'change_request', 'approved', 'rejected',
+        name='review_states'), nullable=False)
+    reviewed_by = Column('reviewed_by', String)  # FK to Colleague????
 
 
