@@ -83,9 +83,8 @@ class Tissue(Biosample):
     id = Column('biosample_no', Integer, ForeignKey('biosample.biosample_no'), primary_key=True)
 
     date_obtained = Column('date_obtained', Date, nullable=False)
-    donor_no = Column(Integer, ForeignKey('human_donor.donor_no'))
-    donor = relationship('HumanDonor', uselist=False, backref='tissues')
-    ''' this doesn't handle mouse right at all!!! '''
+    donor_no = Column(Integer, ForeignKey('donor.donor_no'))
+    donor = relationship('Donor', uselist=False, backref='tissues')
 
     extraction_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
     extraction_protocol = relationship('Protocol', primaryjoin=

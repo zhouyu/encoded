@@ -87,14 +87,13 @@ class Validation(Base, ENCODEdTableMixin):
     status = Column('validation_status', Enum('validated', 'not validated',
         'invalid', name='validation_states'))
 
-    documents = relationship('ValidationDocument', backref='validation')
-
 
 class ValidationDocument(Base, ENCODEdTableMixin):
 
     __tablename__ = 'validation_document'
 
     id = Column('validation_document_no', Integer, primary_key=True)
+    validation_no = Column('validation_no', Integer, ForeignKey('validation.validation_no'))
     method = Column('method',
         Enum('ENCODE2', 'To be added',  # special autovalidation)
         'Immunoflurescense', 'Immunoprecipitation', 'Western Blot',
@@ -105,5 +104,7 @@ class ValidationDocument(Base, ENCODEdTableMixin):
         Enum('submitted', 'change_request', 'approved', 'rejected',
         name='review_states'), nullable=False)
     reviewed_by = Column('reviewed_by', String)  # FK to Colleague????
+
+    validation = relationship('Validation', uselist=False, backref='documents')
 
 
