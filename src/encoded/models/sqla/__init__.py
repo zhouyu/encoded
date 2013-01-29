@@ -1,6 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Column
-from sqlalchemy.types  import String, Boolean, DateTime
+from sqlalchemy.types import String, Boolean, DateTime
+from encoded.storage import UUID
 
 Base = declarative_base()
 
@@ -23,9 +24,10 @@ class CommonEqualityMixin(object):
         return not self.__eq__(other)
 
 
-class ENCODEdTable(object):
+class ENCODEdTableMixin(object):
     ''' All tables in ENCODEd have these fields '''
 
+    uuid = Column('gid', UUID, nullable=False)
     date_created = Column('date_created', DateTime, nullable=False)
     created_by = Column('created_by', String, nullable=False)
     ## created_by is foreign key to colleague?

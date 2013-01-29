@@ -17,3 +17,4 @@ src/encoded/static/css/responsive.css
 .pydevproject
 src/encoded/static/css/style.css
 src/encoded/static/scss/_variables.original.scss
+:memory

@@ -3,21 +3,21 @@ Created on Jan 24, 2013
 @author: hitz
 '''
 
-from . import Base, ENCODEdTable
+from . import Base, ENCODEdTableMixin
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy.types import Integer, String, Enum
 
 
-class Antibody(Base, ENCODEdTable):
+class Antibody(Base, ENCODEdTableMixin):
 
     __tablename__ = 'antibody'
 
-    id = Column('antibody_id', Integer, primary_key=True)
-    accession = Column('antibody_accession', String, nullable=False)
-    source_id = Column('source_id', Integer, ForeignKey('source.source_id'))
-    product_id = Column('product_id', String, nullable=False)
-    lot_id = Column('lot_id', String)
+    id = Column('antibody_no', Integer, primary_key=True)
+    accession = Column('antibody_acc', String, nullable=False)
+    source_no = Column('source_no', Integer, ForeignKey('source.source_no'))
+    product_no = Column('product_no', String, nullable=False)
+    lot_no = Column('lot_no', String)
     submitted_by = Column('submitted_by', String, nullable=False)
     isotype = Column('isotype', String)
     clonality = Column('clonality',
@@ -25,32 +25,32 @@ class Antibody(Base, ENCODEdTable):
     purification = Column('purification', String)
     antigen_description = Column('antigen_description', String)
     epitope = Column('epitope', String)
-    host_organism_id = Column('host_organism_id',
-        ForeignKey('organism.organism_id'))
+    host_organism_no = Column('host_organism_no',
+        ForeignKey('organism.organism_no'))
 
 
-class Target(Base, ENCODEdTable):
+class Target(Base, ENCODEdTableMixin):
 
     __tablename__ = 'target'
 
-    id = Column('target_id', Integer, primary_key=True)
+    id = Column('target_no', Integer, primary_key=True)
     label = Column('target_label', String, nullable=False)
     label_stem = Column('lable_stem', String)
     symbol = Column('symbol', String, nullable=False)
-    organism_id = Column('organism_id', ForeignKey('organism.organism_id'),
+    organism_no = Column('organism_no', ForeignKey('organism.organism_no'),
         nullable=False)
     target_class = Column('target_class', String)  # GO Molecular Function SLIM
-    modification_id = Column('modification_id', Integer,
-        ForeignKey('modification.modification_id'))  # nullable FK
+    modification_no = Column('modification_no', Integer,
+        ForeignKey('modification.modification_no'))  # nullable FK
 
     modification = relationship('Modification', uselist=False)
 
 
-class Modification(Base, ENCODEdTable):
+class Modification(Base, ENCODEdTableMixin):
 
     __tablename__ = 'modification'
 
-    id = Column('modification_id', Integer, primary_key=True)
+    id = Column('modification_no', Integer, primary_key=True)
     type = Column('modification_type',
         Enum('GFP-fusion', 'acetylation', 'phosphoryation', 'ubiquitinylation',
         'monomethlyation', 'dimethylation', 'trimethlyation',
@@ -75,14 +75,14 @@ class Modification(Base, ENCODEdTable):
         return str(self.position + self.residue + short_types[self.type])
 
 
-class Validation(Base, ENCODEdTable):
+class Validation(Base, ENCODEdTableMixin):
 
     __tablename__ = 'validation'
 
-    id = Column('validation_id', Integer, primary_key=True)
-    antibody_id = Column('antibody_id', ForeignKey('antibody.antibody_id'),
+    id = Column('validation_no', Integer, primary_key=True)
+    antibody_no = Column('antibody_no', ForeignKey('antibody.antibody_no'),
         nullable=False)
-    target_id = Column('target_id', Integer, ForeignKey('target.target_id'),
+    target_no = Column('target_no', Integer, ForeignKey('target.target_no'),
         nullable=False)
     status = Column('validation_status', Enum('validated', 'not validated',
         'invalid', name='validation_states'))
@@ -90,17 +90,17 @@ class Validation(Base, ENCODEdTable):
     documents = relationship('ValidationDocument', backref='validation')
 
 
-class ValidationDocument(Base, ENCODEdTable):
+class ValidationDocument(Base, ENCODEdTableMixin):
 
     __tablename__ = 'validation_document'
 
-    id = Column('validation_document_id', Integer, primary_key=True)
+    id = Column('validation_document_no', Integer, primary_key=True)
     method = Column('method',
         Enum('ENCODE2', 'To be added',  # special autovalidation)
         'Immunoflurescense', 'Immunoprecipitation', 'Western Blot',
         'Correlation', 'Mass-Spec', name='antibody_validation_methods'),
         nullable=False)
-    document_id = Column('document_id', ForeignKey('document.document_id'))
+    document_no = Column('document_no', ForeignKey('document.document_no'))
     status = Column('review_status',
         Enum('submitted', 'change_request', 'approved', 'rejected',
         name='review_states'), nullable=False)
