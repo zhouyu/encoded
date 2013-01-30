@@ -1,98 +1,77 @@
 from pyramid.view import view_config
-from ..storage import (
-    DBSession,
-    CurrentStatement,
-    Resource,
-    )
+from . import CollectionViews
 
 
 @view_config(route_name='home', request_method='GET')
 def home(request):
     result = {
-        'class': ['portal'],
-        'properties': {
-            'title': 'Home',
-            'portal_title': 'ENCODE 3',
+        'title': 'Home',
+        'portal_title': 'ENCODE 3',
+        '_links': {
+            'self': {'href': request.route_path('home')},
+            'profile': {'href': '/profiles/portal'},
+            # 'login': {'href': request.route_path('login')},
             },
-        'links': [
-            {'rel': ['self'], 'href': request.route_url('home')},
-            # {'rel': ['login'], 'href': request.route_url('login')},
-            ],
         }
     return result
 
 
-@view_config(route_name='antibodies', request_method='GET')
-def antibodies(request):
-    session = DBSession()
-    query = session.query(CurrentStatement).filter(CurrentStatement.predicate == 'antibody')
-    collection_uri = request.route_url('antibodies')
-    items = [{
-        'rel': ['item'],
-        'class': ['antibody'],
-        'properties': model.statement,
-        'links': [
-            {'rel': ['self'], 'href': request.route_url('antibody', antibody=model.rid)},
-            {'rel': ['collection'], 'href': collection_uri},
-            ],
-        } for model in query.all()]
-    result = {
-        'class': ['collection:antibodies', 'collection'],
-        'properties': {
-            'title': 'Antibodies',
-            },
-        'entities': items,
-        'actions': {
-            'name': 'add-antibody',
-            'title': 'Add antibody',
-            'method': 'POST',
-            'type': 'application/json',
-            'href': collection_uri,
-        },
-        'links': [
-            {'rel': ['self'], 'href': collection_uri},
-            ],
+@CollectionViews.config()
+class Antibodies(CollectionViews):
+    collection = 'antibodies'
+    item_type = 'antibody'
+    properties = {
+        'title': 'Antibodies registry',
+        'description': 'Listing of antibodies returned from server',
         }
-    return result
 
 
-@view_config(route_name='antibodies', request_method='POST')
-def create_antibody(request):
-    session = DBSession()
-    resource = Resource({'antibody': request.json_body})
-    session.add(resource)
-    item_uri = request.route_url('antibody', antibody=resource.rid)
-    request.response.status = 201
-    request.response.location = item_uri
-    result = {
-        'class': ['result:success', 'result'],
-        'entities': [
-            {'rel': ['item'], 'href': item_uri},
-            ],
+@CollectionViews.config()
+class Organisms(CollectionViews):
+    collection = 'organisms'
+    item_type = 'organism'
+    properties = {
+        'title': 'Organisms',
+        'description': 'Listing of organisms returned from server',
         }
-    return result
 
 
-@view_config(route_name='antibody', request_method='GET')
-def antibody(request):
-    key = (request.matchdict['antibody'], 'antibody')
-    session = DBSession()
-    model = session.query(CurrentStatement).get(key)
-    item_uri = request.route_url('antibody', antibody=model.rid)
-    collection_uri = request.route_url('antibodies')
-    result = {
-        'class': ['antibody'],
-        'properties': model.statement,
-        'actions': {
-            'name': 'save',
-            'title': 'Save',
-            'method': 'POST',
-            'type': 'application/json',
-            'href': collection_uri,
-        },
-        'links': [
-            {'rel': ['self'], 'href': item_uri},
-            {'rel': ['collection'], 'href': collection_uri},
-            ],
+@CollectionViews.config()
+class Sources(CollectionViews):
+    collection = 'sources'
+    item_type = 'source'
+    properties = {
+        'title': 'Antibody sources',
+        'description': 'Listing of sources returned from server',
         }
-    return result
+
+
+@CollectionViews.config()
+class Targets(CollectionViews):
+    collection = 'targets'
+    item_type = 'target'
+    properties = {
+        'title': 'Antibody targets',
+        'description': 'Listing of targets returned from server',
+        }
+
+
+# The following should really be child collections.
+@CollectionViews.config()
+class Validations(CollectionViews):
+    collection = 'validations'
+    item_type = 'validation'
+    properties = {
+        'title': 'Antibody validations',
+        'description': 'Listing of validations returned from server',
+        }
+
+
+@CollectionViews.config()
+class Approvals(CollectionViews):
+    collection = 'approvals'
+    item_type = 'approval'
+    properties = {
+        'title': 'Antibody approvals',
+        'description': 'Listing of approvals returned from server',
+        }
