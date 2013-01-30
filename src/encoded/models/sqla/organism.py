@@ -50,7 +50,7 @@ class HumanDonor(Donor):
     id = Column('donor_no', Integer, ForeignKey('donor.donor_no'), primary_key=True)
     ethnicity = Column('ethnicity', String)  # Should be coded or Enum
     health_status = Column('health_status', String)
-    external_no = Column('external_donor_no', Integer)
+    external_id = Column('external_donor_id', Integer)
 
     __mapper_args__ = {'polymorphic_identity': "Homo Sapiens"}
 

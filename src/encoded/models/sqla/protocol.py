@@ -32,7 +32,6 @@ class Document(Base, ENCODEdTableMixin):
     type = Column('document_type',
         Enum('pdf', 'doc', 'docx', 'rtf', 'txt', 'rst',
         name='document_file_types'), nullable=False)
-    submitted_by = Column('submitted_by', String, nullable=False)
 
     ## either file_location or documment blob != null but both?
     file_location = Column('file_location', String)

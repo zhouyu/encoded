@@ -19,7 +19,7 @@ class Antibody(Base, ENCODEdTableMixin):
     product_no = Column('product_no', String, nullable=False)
     lot_no = Column('lot_no', String)
     submitted_by = Column('submitted_by', String, nullable=False)
-    isotype = Column('isotype', String)
+    isotype = Column('isotype', Enum('Igg'))
     clonality = Column('clonality',
         Enum('monoclonal', 'polyclonal', name='antibody_clonality'))
     purification = Column('purification', String)
@@ -103,6 +103,7 @@ class ValidationDocument(Base, ENCODEdTableMixin):
     status = Column('review_status',
         Enum('submitted', 'change_request', 'approved', 'rejected',
         name='review_states'), nullable=False)
+    submitted_by = Column('submitted_by', String)
     reviewed_by = Column('reviewed_by', String)  # FK to Colleague????
 
     validation = relationship('Validation', uselist=False, backref='documents')

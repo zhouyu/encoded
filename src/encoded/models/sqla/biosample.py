@@ -16,19 +16,23 @@ class Biosample(Base, ENCODEdTableMixin, CommonEqualityMixin):
 
     id = Column('biosample_no', Integer, primary_key=True)
     accession = Column('biosample_acc', String, nullable=False)
-    type = Column('biosample_type', String, nullable=False)
+    type = Column('biosample_type', Enum('Tissue', 'Cell Line', 'Single Cell',
+        'Primary Cell Culture', 'Induced Pluripotent Stem Cell Line',
+         name='biosample_types'), nullable=False)
+
     source_no = Column('source_no', Integer, ForeignKey('source.source_no'),
         nullable=False)
     product_no = Column('product_no', String, nullable=False)
     lot_no = Column('lot_no', String)
+
     submitted_by = Column('submitted_by', String, nullable=False)
     treatment_no = Column('treatment_no', Integer,
         ForeignKey('treatment.treatment_no'))
 
     ''' should below be CV tables?  Don't have to load the whole thing '''
-    ontology = Column('ontology', Enum('UBERON', 'CLO', 'EFO',
+    ontology = Column('ontology', Enum('UBERON', 'CLO', 'BRENDA', 'MCCL',
         name='biosample_ontologies'), nullable=False)
-    ontology_no = Column('ontology_no', String, nullable=False)
+    ontology_id = Column('ontology_id', String, nullable=False)
     ontology_term = Column('ontology_term', String, nullable=False)
 
     source = relationship('Source', uselist=False)
@@ -40,11 +44,9 @@ class Biosample(Base, ENCODEdTableMixin, CommonEqualityMixin):
         primaryjoin="BiosampleRelbiosample_id==Biosample.id"
     )
 
-    '''should be a list of Biosmaple_rel.related_biosample_id
-       could this be broken up by type:
-       derived_from = BiosampleRel(related) where type=derived?
-       derivatives = BiosampleRel(id) where type=derived
-    '''
+    derived_from = relationship('BiosampleRelation',
+        primaryjoin="and_(BiosampleRel.related_biosample_id==Biosample.id, "
+        "BiosampleRel.type.equals('derived_from'))", backref='derivatives')
 
     __mapper_args__ = {'polymorphic_on': type,
                        'polymorphic_identity': "Biosample",
@@ -64,15 +66,13 @@ class CellLine(Biosample):
     organism_no = Column(Integer, ForeignKey('organism.organism_no'))
     organism = relationship('Organism', uselist=False, backref='cell_line')
 
+    gender = Column(Enum(name='genders'))
+    # the above is a denormalization of data in an ontology
+
     growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
     growth_protocol = relationship('Protocol', primaryjoin=
         "and_(CellLine.growth_protocol_id==Protocol.id, "
-        "Protocol.type.equals('growth'))", backref='cellines')
-
-    is_stable = Column('is_stable', Boolean, nullable=False)
-    construct = relationship('Construct', backref='cellines')
-
-    ''' otherwise add "Primary Cell Line" subtype '''
+        "Protocol.type.equals('growth'))", backref='cell_lines')
 
     __mapper_args__ = {'polymorphic_identity': "Cell Line"}
 
@@ -86,56 +86,78 @@ class Tissue(Biosample):
     donor_no = Column(Integer, ForeignKey('donor.donor_no'))
     donor = relationship('Donor', uselist=False, backref='tissues')
 
-    extraction_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    extraction_protocol = relationship('Protocol', primaryjoin=
+    excision_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
+    excision_protocol = relationship('Protocol', primaryjoin=
         "and_(Tissue.extraction_protocol_id==Protocol.id, "
-        "Protocol.type.equals('extraction'))", backref='tissues')
+        "Protocol.type.equals('excision'))", backref='tissues')
 
     __mapper_args__ = {'polymorphic_identity': "Tissue"}
 
 
 class SingleCell(Tissue):
 
-    ''' is this too deep? '''
     __tablename__ = 'single_cell'
-    id = Column('biosample_no', Integer, ForeignKey('tissue.biosample_no'), primary_key=True)
+    id = Column('biosample_no', Integer, ForeignKey('tissue.biosample_no'),
+        primary_key=True)
 
     validation_documents = relationship('Document')  # unspec'd many-to-many!
 
     purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
     purification_protocol = relationship('Protocol', primaryjoin=
-        "and_(SingleCell.purification_protocol_id==Protocol.id, "
-        "Protocol.type.equals('purification'))", backref='singlecells')
-
-    excision_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    excision_protocol = relationship('Protocol', primaryjoin=
-        "and_(SingleCell.excision_protocol_id==Protocol.id, "
-        "Protocol.type.equals('excision'))", backref='singlecells')
+        "and_(SingleCell.purification_protocol_no==Protocol.id, "
+        "Protocol.type.equals('purification'))", backref='single_cells')
 
     __mapper_args__ = {'polymorphic_identity': "Single Cell"}
 
 
-class IPStemCellLine(CellLine):
+class PrimaryCellCulture(Tissue):
+
+    __tablename__ = 'primary_cell_culture'
+    id = Column('biosample_no', Integer, ForeignKey('tissue.biosample_no'),
+        primary_key=True)
+
+    ''' this assumes that PCCs have only 1 donor, that might not be the case
+    it would have to be split off into a direct subclass of Biosample then
+    '''
+
+    purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
+    purification_protocol = relationship('Protocol', primaryjoin=
+        "and_(PrimaryCellCulture.purification_protocol_no==Protocol.id, "
+        "Protocol.type.equals('purification'))", backref='primary_cell_cultures')
+
+    growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
+    growth_protocol = relationship('Protocol', primaryjoin=
+        "and_(PrimaryCellCulture.growth_protocol_no==Protocol.id, "
+        "Protocol.type.equals('growth'))", backref='primary_cell_cultures')
+
+    __mapper_args_ = {'polymorphic_identity': "Primary Cell Culture"}
+
+
+class IPStemCellLine(Tissue):
 
     __tablename__ = 'ipstemcell_line'
-    id = Column('biosample_no', Integer, ForeignKey('cell_line.biosample_no'), primary_key=True)
+    id = Column('biosample_no', Integer, ForeignKey('tissue.biosample_no'), primary_key=True)
 
-    derived_from = relationship('BiosampleRelation',
-        primaryjoin='BiosampleRel.related_biosample_id==Biosample.id',
-        uselist=False,
-        )
+    purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
+    purification_protocol = relationship('Protocol', primaryjoin=
+        "and_(IPStemCellLine.purification_protocol_no==Protocol.id, "
+        "Protocol.type.equals('purification'))", backref='single_cells')
 
-    __mapper_args__ = {'polymorphic_identity': "Induced Pluripotent Stem Cell"}
+    growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
+    growth_protocol = relationship('Protocol', primaryjoin=
+        "and_(IPStemCellLine.growth_protocol_no==Protocol.id, "
+        "Protocol.type.equals('growth'))", backref='IPstemcell_lines')
 
-    ''' must be derived from Biosample where type='Tissue', inherits growth
-        protocol from CellLine, inherits donor '''
+    __mapper_args__ = {'polymorphic_identity': "Induced Pluripotent Stem Cell Line"}
 
 
 class BiosampleRel(Base, ENCODEdTableMixin):
 
     __tablename__ = 'biosample_relationship'
     id = Column('biosample_rel_no', Integer, primary_key=True)
-    type = Column('biosample_type', String)
+    type = Column('relationship_type',
+        Enum('derived_from', 'paired_with', 'pooled_with',
+        'has_a', 'is_a', 'part_of', name='relationship_types'), nullable=False)
     biosample_no = Column(Integer, ForeignKey('biosample.biosample_no'))
     related_biosample_no = Column(Integer, ForeignKey('biosample.biosample_no'))
 
@@ -158,9 +180,9 @@ class TreatmentDetails(Base):
     __tablename__ = 'treatment_details'
     ''' should below be CV tables?  Don't have to load the whole thing '''
     id = Column('treatment_details_no', Integer, primary_key=True)
-    ontology = Column('ontology', Enum('ChEBI', 'Protein',
-        name='treatment_ontologies'), nullable=False)
-    ontology_no = Column('ontology_no', String, nullable=False)
+    ontology = Column('ontology', Enum('ChEBI', 'Protein', 'Cocktail',
+        'Transfection Construct', name='treatment_ontologies'), nullable=False)
+    ontology_id = Column('ontology_id', String, nullable=False)
     ontology_term = Column('ontology_term', String, nullable=False)
 
     concentration = Column('concentration', Float)
@@ -173,9 +195,13 @@ class TreatmentDetails(Base):
     # duration/duration_units could also be a DateTime or Interval obj.
 
 
-## this could also use the Association object pattern from SQLA
-treat_treat_details = Table('treat_treat_details', Base.metadata,
-    Column('treat_treat_details_no', Integer, primary_key=True),
-    Column('details_no', Integer, ForeignKey('treatment_details.treatment_details_no')),
+## these could also use the Association object pattern from SQLA
+treat_treat_detail = Table('treat_treat_detail', Base.metadata,
+    Column('treat_treat_detail_no', Integer, primary_key=True),
+    Column('detail_no', Integer, ForeignKey('treatment_detail.treatment_detail_no')),
     Column('treatment_no', Integer, ForeignKey('treatment.treatment_no')))
 
+biosample_documents = Table('biosample_document', Base.metadata,
+    Column('biosample_document_no', Integer, primary_key=True),
+    Column('biosample_no', Integer, ForeignKey('biosample.biosample_no')),
+    Column('document_no', Integer, ForeignKey('document.document_no')))
