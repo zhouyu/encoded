@@ -19,7 +19,7 @@ class Antibody(Base, ENCODEdTableMixin):
     product_no = Column('product_no', String, nullable=False)
     lot_no = Column('lot_no', String)
     submitted_by = Column('submitted_by', String, nullable=False)
-    isotype = Column('isotype', Enum('Igg'))
+    isotype = Column('isotype', Enum('Igg', name='isotypes'))
     clonality = Column('clonality',
         Enum('monoclonal', 'polyclonal', name='antibody_clonality'))
     purification = Column('purification', String)

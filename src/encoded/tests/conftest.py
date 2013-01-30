@@ -62,3 +62,23 @@ def engine(request):
 def session(engine, transaction):
     from encoded.storage import DBSession
     return DBSession()
+
+
+@fixture  # (scope='models_sqla')
+def sqla_engine(request):
+    from encoded.models.sqla import Base
+    from encoded import configure_engine
+    engine = configure_engine(settings)
+
+    def truncate_all():
+        for table in reversed(Base.metadata.sorted_tables):
+            engine.execute(table.delete())
+
+    request.addfinalizer(truncate_all)
+    return engine
+
+
+@fixture
+def sqla_session(sqla_engine, transaction):
+    from encoded.storage import DBSession
+    return DBSession()

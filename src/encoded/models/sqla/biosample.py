@@ -6,7 +6,7 @@ Adopted from sgd2 Biorelation by kpaskov
 from . import Base, ENCODEdTableMixin, CommonEqualityMixin
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Table, Column, ForeignKey
-from sqlalchemy.types import Integer, String, Date, Float, Enum, Boolean
+from sqlalchemy.types import Integer, String, Date, Float, Enum
 
 
 class Biosample(Base, ENCODEdTableMixin, CommonEqualityMixin):
@@ -30,7 +30,7 @@ class Biosample(Base, ENCODEdTableMixin, CommonEqualityMixin):
         ForeignKey('treatment.treatment_no'))
 
     ''' should below be CV tables?  Don't have to load the whole thing '''
-    ontology = Column('ontology', Enum('UBERON', 'CLO', 'BRENDA', 'MCCL',
+    ontology = Column('ontology', Enum('UBERON', 'CL', 'EFO',
         name='biosample_ontologies'), nullable=False)
     ontology_id = Column('ontology_id', String, nullable=False)
     ontology_term = Column('ontology_term', String, nullable=False)
@@ -66,12 +66,12 @@ class CellLine(Biosample):
     organism_no = Column(Integer, ForeignKey('organism.organism_no'))
     organism = relationship('Organism', uselist=False, backref='cell_line')
 
-    gender = Column(Enum(name='genders'))
+    gender = Column(Enum('Male', 'Female', 'Unknown', name='genders'))
     # the above is a denormalization of data in an ontology
 
     growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    growth_protocol = relationship('Protocol', primaryjoin=
-        "and_(CellLine.growth_protocol_id==Protocol.id, "
+    growth_protocol = relationship('Protocol',
+        primaryjoin="and_(CellLine.growth_protocol_id==Protocol.id, "
         "Protocol.type.equals('growth'))", backref='cell_lines')
 
     __mapper_args__ = {'polymorphic_identity': "Cell Line"}
@@ -83,12 +83,13 @@ class Tissue(Biosample):
     id = Column('biosample_no', Integer, ForeignKey('biosample.biosample_no'), primary_key=True)
 
     date_obtained = Column('date_obtained', Date, nullable=False)
-    donor_no = Column(Integer, ForeignKey('donor.donor_no'))
-    donor = relationship('Donor', uselist=False, backref='tissues')
+    donors = relationship("Donor",
+                    secondary='tissue_donor',
+                    backref="tissues")
 
     excision_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    excision_protocol = relationship('Protocol', primaryjoin=
-        "and_(Tissue.extraction_protocol_id==Protocol.id, "
+    excision_protocol = relationship('Protocol',
+        primaryjoin="and_(Tissue.extraction_protocol_id==Protocol.id, "
         "Protocol.type.equals('excision'))", backref='tissues')
 
     __mapper_args__ = {'polymorphic_identity': "Tissue"}
@@ -103,8 +104,8 @@ class SingleCell(Tissue):
     validation_documents = relationship('Document')  # unspec'd many-to-many!
 
     purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    purification_protocol = relationship('Protocol', primaryjoin=
-        "and_(SingleCell.purification_protocol_no==Protocol.id, "
+    purification_protocol = relationship('Protocol',
+        primaryjoin="and_(SingleCell.purification_protocol_no==Protocol.id, "
         "Protocol.type.equals('purification'))", backref='single_cells')
 
     __mapper_args__ = {'polymorphic_identity': "Single Cell"}
@@ -121,13 +122,13 @@ class PrimaryCellCulture(Tissue):
     '''
 
     purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    purification_protocol = relationship('Protocol', primaryjoin=
-        "and_(PrimaryCellCulture.purification_protocol_no==Protocol.id, "
+    purification_protocol = relationship('Protocol',
+        primaryjoin="and_(PrimaryCellCulture.purification_protocol_no==Protocol.id, "
         "Protocol.type.equals('purification'))", backref='primary_cell_cultures')
 
     growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    growth_protocol = relationship('Protocol', primaryjoin=
-        "and_(PrimaryCellCulture.growth_protocol_no==Protocol.id, "
+    growth_protocol = relationship('Protocol',
+        primaryjoin="and_(PrimaryCellCulture.growth_protocol_no==Protocol.id, "
         "Protocol.type.equals('growth'))", backref='primary_cell_cultures')
 
     __mapper_args_ = {'polymorphic_identity': "Primary Cell Culture"}
@@ -139,13 +140,13 @@ class IPStemCellLine(Tissue):
     id = Column('biosample_no', Integer, ForeignKey('tissue.biosample_no'), primary_key=True)
 
     purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    purification_protocol = relationship('Protocol', primaryjoin=
-        "and_(IPStemCellLine.purification_protocol_no==Protocol.id, "
+    purification_protocol = relationship('Protocol',
+        primaryjoin="and_(IPStemCellLine.purification_protocol_no==Protocol.id, "
         "Protocol.type.equals('purification'))", backref='single_cells')
 
     growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    growth_protocol = relationship('Protocol', primaryjoin=
-        "and_(IPStemCellLine.growth_protocol_no==Protocol.id, "
+    growth_protocol = relationship('Protocol',
+        primaryjoin="and_(IPStemCellLine.growth_protocol_no==Protocol.id, "
         "Protocol.type.equals('growth'))", backref='IPstemcell_lines')
 
     __mapper_args__ = {'polymorphic_identity': "Induced Pluripotent Stem Cell Line"}
@@ -156,7 +157,7 @@ class BiosampleRel(Base, ENCODEdTableMixin):
     __tablename__ = 'biosample_relationship'
     id = Column('biosample_rel_no', Integer, primary_key=True)
     type = Column('relationship_type',
-        Enum('derived_from', 'paired_with', 'pooled_with',
+        Enum('derived_from', 'develops_from', 'contains',
         'has_a', 'is_a', 'part_of', name='relationship_types'), nullable=False)
     biosample_no = Column(Integer, ForeignKey('biosample.biosample_no'))
     related_biosample_no = Column(Integer, ForeignKey('biosample.biosample_no'))
@@ -170,16 +171,16 @@ class Treatment(Base, ENCODEdTableMixin):
     description = Column('treatment_description', String)
     submitted_by = Column('submitted_by', String, nullable=False)
 
-    details = relationship("TreatmentDetails",
-                    secondary='treat_treat_details',
+    details = relationship("TreatmentDetail",
+                    secondary='treat_treat_detail',
                     backref="treatments")
 
 
-class TreatmentDetails(Base):
+class TreatmentDetail(Base):
 
-    __tablename__ = 'treatment_details'
+    __tablename__ = 'treatment_detail'
     ''' should below be CV tables?  Don't have to load the whole thing '''
-    id = Column('treatment_details_no', Integer, primary_key=True)
+    id = Column('treatment_detail_no', Integer, primary_key=True)
     ontology = Column('ontology', Enum('ChEBI', 'Protein', 'Cocktail',
         'Transfection Construct', name='treatment_ontologies'), nullable=False)
     ontology_id = Column('ontology_id', String, nullable=False)
@@ -194,6 +195,10 @@ class TreatmentDetails(Base):
         name='time_units'))
     # duration/duration_units could also be a DateTime or Interval obj.
 
+tissue_donor = Table('tissue_donor', Base.metadata,
+    Column('tissue_donor_no', Integer, primary_key=True),
+    Column('tissue_no', Integer, ForeignKey('tissue.biosample_no')),
+    Column('donor_no', Integer, ForeignKey('donor.donor_no')))
 
 ## these could also use the Association object pattern from SQLA
 treat_treat_detail = Table('treat_treat_detail', Base.metadata,
@@ -201,7 +206,7 @@ treat_treat_detail = Table('treat_treat_detail', Base.metadata,
     Column('detail_no', Integer, ForeignKey('treatment_detail.treatment_detail_no')),
     Column('treatment_no', Integer, ForeignKey('treatment.treatment_no')))
 
-biosample_documents = Table('biosample_document', Base.metadata,
+biosample_document = Table('biosample_document', Base.metadata,
     Column('biosample_document_no', Integer, primary_key=True),
     Column('biosample_no', Integer, ForeignKey('biosample.biosample_no')),
     Column('document_no', Integer, ForeignKey('document.document_no')))
