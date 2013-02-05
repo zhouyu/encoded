@@ -30,7 +30,11 @@
       },
 
       isNew: function() {
+<<<<<<< .merge_file_NB5RJz
         return !(this.links.self);
+=======
+        return this.links.self || Model.__super__.isNew.call(this);
+>>>>>>> .merge_file_d01Zbs
       }
     });
 

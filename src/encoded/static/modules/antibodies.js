@@ -1,9 +1,24 @@
 define(['exports', 'jquery', 'underscore', 'base',
     'text!templates/antibodies/home.html',
+<<<<<<< .merge_file_UcdzUV
     'text!templates/antibodies/row.html'],
 function antibodies(exports, $, _, base, home_template, row_template) {
 
     exports.Antibody = base.Model.extend({
+=======
+    'text!templates/antibodies/item.html',
+    'text!templates/antibodies/row.html'],
+function antibodies(exports, $, _, base, home_template, item_template, row_template) {
+
+    exports.Antibody = base.Model.extend({
+        urlRoot: '/antibodies/',
+        initialize: function initialize(attrs, options) {
+            if (options && options.route_args) {
+                this.id = options.route_args[0];
+                this.deferred = this.fetch();
+            }
+        }
+>>>>>>> .merge_file_5WCntW
     });
 
     exports.AntibodyCollection = base.Collection.extend({
@@ -53,9 +68,26 @@ function antibodies(exports, $, _, base, home_template, row_template) {
             return this;
         }
 
+<<<<<<< .merge_file_UcdzUV
     }, {
         route_name: 'antibodies',
         model_factory: exports.AntibodyCollection
+=======
+    }, {
+        route_name: 'antibodies',
+        model_factory: exports.AntibodyCollection
+    });
+
+    exports.AntibodyView = base.View.extend({
+        initialize: function initialize(options) {
+            var model = options.model;
+            this.deferred = model.deferred;
+        },
+        template: _.template(item_template)
+    }, {
+        route_name: 'antibody',
+        model_factory: exports.Antibody
+>>>>>>> .merge_file_5WCntW
     });
 
     return exports;
