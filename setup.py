@@ -7,10 +7,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.rst')).read()
 
 requires = [
     'SQLAlchemy',
-<<<<<<< .merge_file_lZxrJg
     'psycopg2',
-=======
->>>>>>> .merge_file_B8g0ec
     'WebTest',
     'pyramid',
     'pyramid_tm',
