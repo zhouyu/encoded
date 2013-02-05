@@ -3,13 +3,13 @@ Created on Dec 18, 2012
 Adopted from sgd2 Biorelation by kpaskov
 @author: hitz
 '''
-from . import Base, ENCODEdTableMixin, CommonEqualityMixin
+from . import Base, ENCODEdTableMixin
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Table, Column, ForeignKey
 from sqlalchemy.types import Integer, String, Date, Float, Enum
 
 
-class Biosample(Base, ENCODEdTableMixin, CommonEqualityMixin):
+class Biosample(Base, ENCODEdTableMixin):
     ''' doc string for lintness'''
 
     __tablename__ = "biosample"
@@ -40,6 +40,11 @@ class Biosample(Base, ENCODEdTableMixin, CommonEqualityMixin):
     treatment = relationship('Treatment', uselist=False)
     ## any Biosample can be chemically treated
 
+    date_obtained = Column('date_obtained', Date)
+    donors = relationship("Donor",
+                    secondary='tissue_donor',
+                    backref="biosamples")
+
     related_biosamples = relationship('BiosampleRel',
         primaryjoin="BiosampleRelbiosample_id==Biosample.id"
     )
@@ -48,9 +53,27 @@ class Biosample(Base, ENCODEdTableMixin, CommonEqualityMixin):
         primaryjoin="and_(BiosampleRel.related_biosample_id==Biosample.id, "
         "BiosampleRel.type.equals('derived_from'))", backref='derivatives')
 
-    __mapper_args__ = {'polymorphic_on': type,
-                       'polymorphic_identity': "Biosample",
-                       'with_polymorphic': '*'}
+    purification_protocol = relationship('Protocol', secondary='biosample_protocol',
+        primaryjoin=
+        "and_(biosample_protocol.protocol_no==Protocol.id, "
+        "Protocol.type.equals('purification')), "
+        "biosample_protocol.biosample_no==Biosample.id"
+        ,backref='purified_biosamples')
+
+    growth_protocol = relationship('Protocol', secondary='biosample_protocol',
+        primaryjoin=
+        "and_(biosample_protocol.protocol_no==Protocol.id, "
+        "Protocol.type.equals('growth')), "
+        "biosample_protocol.biosample_no==Biosample.id"
+        ,backref='grown_biosamples')
+
+    excision_protocol = relationship('Protocol', secondary='biosample_protocol',
+        primaryjoin=
+        "and_(biosample_protocol.protocol_no==Protocol.id, "
+        "Protocol.type.equals('excision')), "
+        "biosample_protocol.biosample_no==Biosample.id"
+        ,backref='excised_biosamples')
+
 
     def __init__(self):
         pass
@@ -59,97 +82,44 @@ class Biosample(Base, ENCODEdTableMixin, CommonEqualityMixin):
         pass
 
 
-class CellLine(Biosample):
-    __tablename__ = 'cell_line'
-    id = Column('biosample_no', Integer, ForeignKey('biosample.biosample_no'), primary_key=True)
-
-    organism_no = Column(Integer, ForeignKey('organism.organism_no'))
-    organism = relationship('Organism', uselist=False, backref='cell_line')
-
-    gender = Column(Enum('Male', 'Female', 'Unknown', name='genders'))
-    # the above is a denormalization of data in an ontology
-
-    growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    growth_protocol = relationship('Protocol',
-        primaryjoin="and_(CellLine.growth_protocol_id==Protocol.id, "
-        "Protocol.type.equals('growth'))", backref='cell_lines')
-
-    __mapper_args__ = {'polymorphic_identity': "Cell Line"}
+class StableCellLine(Biosample):
+    ''' many donor fields are null '''
+    ''' must have growth protocol '''
+    pass
 
 
 class Tissue(Biosample):
     ''' includes "whole mouse" which will typically have transfection construct/treatment'''
-    __tablename__ = 'tissue'
-    id = Column('biosample_no', Integer, ForeignKey('biosample.biosample_no'), primary_key=True)
 
-    date_obtained = Column('date_obtained', Date, nullable=False)
-    donors = relationship("Donor",
-                    secondary='tissue_donor',
-                    backref="tissues")
-
-    excision_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    excision_protocol = relationship('Protocol',
-        primaryjoin="and_(Tissue.extraction_protocol_id==Protocol.id, "
-        "Protocol.type.equals('excision'))", backref='tissues')
-
-    __mapper_args__ = {'polymorphic_identity': "Tissue"}
+    ''' may be part_of another Tissue '''
+    ''' may contain other biosamples (pooled)'''
+    ''' must have excision protocol'''
+    pass
 
 
 class SingleCell(Tissue):
 
-    __tablename__ = 'single_cell'
-    id = Column('biosample_no', Integer, ForeignKey('tissue.biosample_no'),
-        primary_key=True)
-
-    validation_documents = relationship('Document')  # unspec'd many-to-many!
-
-    purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    purification_protocol = relationship('Protocol',
-        primaryjoin="and_(SingleCell.purification_protocol_no==Protocol.id, "
-        "Protocol.type.equals('purification'))", backref='single_cells')
-
-    __mapper_args__ = {'polymorphic_identity': "Single Cell"}
+    ''' may be part_of another Tissue '''
+    ''' must have purification protocol'''
+    ''' may have valdiation images'''
+    validation_images = relationship('Document')  # unspec'd many-to-many!
 
 
 class PrimaryCellCulture(Tissue):
 
-    __tablename__ = 'primary_cell_culture'
-    id = Column('biosample_no', Integer, ForeignKey('tissue.biosample_no'),
-        primary_key=True)
-
-    ''' this assumes that PCCs have only 1 donor, that might not be the case
-    it would have to be split off into a direct subclass of Biosample then
-    '''
-
-    purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    purification_protocol = relationship('Protocol',
-        primaryjoin="and_(PrimaryCellCulture.purification_protocol_no==Protocol.id, "
-        "Protocol.type.equals('purification'))", backref='primary_cell_cultures')
-
-    growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    growth_protocol = relationship('Protocol',
-        primaryjoin="and_(PrimaryCellCulture.growth_protocol_no==Protocol.id, "
-        "Protocol.type.equals('growth'))", backref='primary_cell_cultures')
-
-    __mapper_args_ = {'polymorphic_identity': "Primary Cell Culture"}
+    ''' may be part_of another Tissue '''
+    ''' may contain other biosamples (pooled) '''
+    ''' must have growth protocol '''
+    ''' may have purification protocol'''
+    pass
 
 
 class IPStemCellLine(Tissue):
 
-    __tablename__ = 'ipstemcell_line'
-    id = Column('biosample_no', Integer, ForeignKey('tissue.biosample_no'), primary_key=True)
-
-    purification_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    purification_protocol = relationship('Protocol',
-        primaryjoin="and_(IPStemCellLine.purification_protocol_no==Protocol.id, "
-        "Protocol.type.equals('purification'))", backref='single_cells')
-
-    growth_protocol_no = Column(Integer, ForeignKey('protocol.protocol_no'))
-    growth_protocol = relationship('Protocol',
-        primaryjoin="and_(IPStemCellLine.growth_protocol_no==Protocol.id, "
-        "Protocol.type.equals('growth'))", backref='IPstemcell_lines')
-
-    __mapper_args__ = {'polymorphic_identity': "Induced Pluripotent Stem Cell Line"}
+    ''' must have derived_from relationship '''
+    ''' must have growth protocol '''
+    ''' may have purification protocol'''
+    pass
 
 
 class BiosampleRel(Base, ENCODEdTableMixin):
@@ -195,9 +165,15 @@ class TreatmentDetail(Base):
         name='time_units'))
     # duration/duration_units could also be a DateTime or Interval obj.
 
-tissue_donor = Table('tissue_donor', Base.metadata,
-    Column('tissue_donor_no', Integer, primary_key=True),
-    Column('tissue_no', Integer, ForeignKey('tissue.biosample_no')),
+biosample_protocol = Table('biosample_protocol', Base.metadata,
+    Column('biosample_protocol_no', Integer, primary_key=True),
+    Column('biosample_no', Integer, ForeignKey('biosample.biosample_no')),
+    Column('protocol_no', Integer, ForeignKey('protocol.protocol_no')))
+
+
+biosample_donor = Table('biosample_donor', Base.metadata,
+    Column('biosample_donor_no', Integer, primary_key=True),
+    Column('biosample_no', Integer, ForeignKey('biosample.biosample_no')),
     Column('donor_no', Integer, ForeignKey('donor.donor_no')))
 
 ## these could also use the Association object pattern from SQLA
