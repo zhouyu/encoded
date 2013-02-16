@@ -76,6 +76,8 @@ def main(global_config, **settings):
     config.scan('encoded.renderers')
     config.include('.api')
     config.include('.authz')
+    config.include('.elasticsearch')
+
 
     config.include(static_resources)
     config.include(tests_js)

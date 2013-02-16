@@ -1,6 +1,8 @@
 from pyramid.exceptions import NotFound
 from pyramid.threadlocal import manager
 from pyramid.view import view_config
+import requests
+import json
 from ..authz import (
     RootFactory
     )
@@ -9,6 +11,7 @@ from ..storage import (
     CurrentStatement,
     Resource,
     )
+from pyelasticsearch import ElasticSearch
 
 collections = [
     ('antibodies', 'antibody_approval'),
@@ -22,6 +25,9 @@ collections = [
     ('awards', 'award'),
     ('users', 'user'),
 ]
+
+es = ElasticSearch('http://localhost:9200') # could read from configurator
+
 
 
 def includeme(config):
@@ -221,6 +227,8 @@ class CollectionViews(object):
                     ],
                 },
             }
+        ## add to elasticsearch
+        es.index("encodedcc", self.item_type, item, id=rid)
         return result
 
     def get(self):

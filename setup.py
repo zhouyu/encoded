@@ -15,7 +15,7 @@ requires = [
     'xlrd',
     'zope.sqlalchemy',
     'PyBrowserID',
-    ##'requests>=1.0',
+    'pyes',
     ]
 
 tests_require = [
