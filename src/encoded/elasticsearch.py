@@ -43,9 +43,9 @@ USER_MAPPING = {
 
 def create_indexes(es):
 
-    for collection in collections.keys():
+    for collection, item_type in collections:
         es.create_index_if_missing(collection)
-        if collection == 'users':  #hack
+        if collection == 'users':  # hack
             es.put_mapping('usertype', {'properties': USER_MAPPING},
             [collection])
 

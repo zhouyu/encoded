@@ -11,7 +11,6 @@ from ..storage import (
     CurrentStatement,
     Resource,
     )
-from pyelasticsearch import ElasticSearch
 
 collections = [
     ('antibodies', 'antibody_approval'),
@@ -25,9 +24,6 @@ collections = [
     ('awards', 'award'),
     ('users', 'user'),
 ]
-
-es = ElasticSearch('http://localhost:9200') # could read from configurator
-
 
 
 def includeme(config):
@@ -228,7 +224,7 @@ class CollectionViews(object):
                 },
             }
         ## add to elasticsearch
-        es.index("encodedcc", self.item_type, item, id=rid)
+        #es.index("encodedcc", self.item_type, item, id=rid)
         return result
 
     def get(self):

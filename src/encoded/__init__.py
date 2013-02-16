@@ -1,11 +1,63 @@
 from pyramid.settings import asbool
 from pyramid.config import Configurator
+from pyramid.decorator import reify
+from pyramid.request import Request as BaseRequest
+from pyramid.security import authenticated_userid
+
 from sqlalchemy import engine_from_config
 from .storage import (
     Base,
     DBSession,
     )
 STATIC_MAX_AGE = 0
+
+
+class Request(BaseRequest):
+    """
+    Custom request class
+    """
+
+    @reify
+    def es(self):
+        """
+        Get the Elastic Search connection
+        """
+        settings = self.registry.settings
+        return settings['elasticsearch']
+
+    @reify
+    def user(self):
+        """
+        Get the logged in user
+        """
+        email = authenticated_userid(self)
+        if email is not None:
+            pass
+            # get email out of db rs =...
+            res = [email]
+            if len(res) == 0:
+                pass
+                ## create new user doc
+                '''
+                doc = {
+                    'id': str(uuid4()),
+                    'email': email,
+                    'registered': datetime.datetime.utcnow(),
+                }
+                # store in DB
+                res = self.es.index(doc, 'users', 'usertype', doc['id'])
+                if res['ok'] == False:
+                    logger.error("Signup failure")
+                    logger.error(res)
+                    raise HTTPServerError()
+                self.db.refresh()
+                res = [namedtuple('User', doc.keys())(**doc)]
+                '''
+
+            if len(res) > 0:
+                return res[0]
+
+        return None
 
 
 def static_resources(config):
@@ -74,10 +126,10 @@ def main(global_config, **settings):
     config.add_renderer(None, 'encoded.renderers.PageOrJSON')
     config.add_renderer('null_renderer', 'encoded.renderers.NullRenderer')
     config.scan('encoded.renderers')
+    config.set_request_factory(Request)
     config.include('.api')
     config.include('.authz')
     config.include('.elasticsearch')
-
 
     config.include(static_resources)
     config.include(tests_js)
