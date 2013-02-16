@@ -223,8 +223,9 @@ class CollectionViews(object):
                     ],
                 },
             }
-        ## add to elasticsearch
-        #es.index("encodedcc", self.item_type, item, id=rid)
+        ##import pdb; pdb.set_trace()
+        self.request.es.index(item,self.collection,self.item_type,resource.rid)
+
         return result
 
     def get(self):
