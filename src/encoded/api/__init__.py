@@ -1,6 +1,7 @@
 from pyramid.exceptions import NotFound
 from pyramid.threadlocal import manager
 from pyramid.view import view_config
+from pyes import query as es_query
 import requests
 import json
 from ..authz import (
@@ -101,6 +102,9 @@ class CollectionViews(object):
     def expand_links(self, model, item):
         # This should probably go on a metaclass
         merged_links = {}
+
+        # for each class in reversed call order
+        # add the links
         for cls in reversed(type(self).mro()):
             merged_links.update(vars(cls).get('links', {}))
         links = {}
@@ -149,7 +153,7 @@ class CollectionViews(object):
                     collection_uri=self.collection_uri,
                     item_type=self.item_type,
                     collection=self.collection,
-                    **item)
+                    **model)
                 self.maybe_embed(rel, value['href'])
             else:
                 assert 'repeat' not in value
@@ -159,7 +163,10 @@ class CollectionViews(object):
         return links
 
     def make_item(self, model):
-        item = model.statement.__json__()
+        try:
+            item = model.statement.__json__()  # old models
+        except:
+            item = model # json.dumps(model)  # from ElasticSearchModel (DotDict)
         links = self.expand_links(model, item)
         if links is not None:
             item['_links'] = links
@@ -172,10 +179,14 @@ class CollectionViews(object):
     def list(self):
         if self.no_body_needed():
             return {}
-        session = DBSession()
+        '''session = DBSession()
         query = session.query(CurrentStatement).filter(CurrentStatement.predicate == self.item_type)
+        '''
+        query = es_query.MatchAllQuery()
+        rs = self.request.es.search(query, indices=[self.collection],)
+            #    doc_types=[self.item_type]) crude test indicates this is no faster
         items = []
-        for model in query.all():
+        for model in rs:  # es resultset is an iterator
             item = self.make_item(model)
             item_uri = item['_links']['self']['href']
             embed(self.request, item_uri, item)
@@ -223,15 +234,21 @@ class CollectionViews(object):
                     ],
                 },
             }
-        ##import pdb; pdb.set_trace()
-        self.request.es.index(item,self.collection,self.item_type,resource.rid)
+        # index in elastic search
+        self.request.es.index(item, self.collection, self.item_type, resource.rid)
 
         return result
 
     def get(self):
-        key = (self.request.matchdict['name'], self.item_type)
-        session = DBSession()
-        model = session.query(CurrentStatement).get(key)
+
+        query = es_query.IdsQuery(self.request.matchdict['name'], self.item_type)
+        try:
+            find = self.request.es.search(query)
+            assert len(find) <= 1
+            model = find.next()
+        except StopIteration:
+            model = None
+
         if model is None:
             raise NotFound()
         if self.no_body_needed():

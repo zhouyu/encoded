@@ -4,6 +4,8 @@ http://pyramid.readthedocs.org/en/latest/narr/testing.html
 '''
 from pytest import fixture
 
+import logging
+
 settings = {
     'sqlalchemy.url': 'sqlite://',
     'persona.secret': 'GLIDING LIKE A WHALE',
@@ -11,12 +13,13 @@ settings = {
     'persona.siteName': 'ENCODE DCC Submission',
     'elasticsearch.host': 'http://localhost',
     'elasticsearch.port': '9200',
+    'sqla.logging_level': logging.WARNING,
+    #'sqlalchemy.logging_level': logging.INFO,
     }
 
-import logging
 
 logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+logging.getLogger('sqlalchemy.engine').setLevel(settings['sqla.logging_level'])
 
 
 @fixture
