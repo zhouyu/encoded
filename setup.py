@@ -49,6 +49,7 @@ setup(
     entry_points='''
         [console_scripts]
         extract_test_data = encoded.commands.extract_test_data:main
+        timed_request = encoded.commands.timed_request:main
 
         [paste.app_factory]
         main = encoded:main
