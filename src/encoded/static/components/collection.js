@@ -243,6 +243,29 @@ function (collection, $, class_, React, globals) {
                 loading_or_total = (
                     <span class="table-count label label-warning spinner-warning">Loading...</span>
                 );
+               
+                // if clear icon is hidden, don't show pointer on hover
+                //if ( $(".clear-input-icon").attr("display") == "none"  ) {
+                //	$(".clear-input-icon").removeAttr("display");
+                //}
+               
+                // Show clear filter icon if filter input has content
+                $(document).ready(function() {
+					if ( $(".filter").val() ) {
+						$(".clear-input-icon").attr("cursor","pointer");
+					}
+				});
+                
+                // icon for clearing the filter field
+                $(document).on("propertychange change keyup input paste", "input.filter", function(){
+    				var io = $(this).val().length ? 1 : 0 ;
+    				$(this).next(".clear-input-icon").stop().fadeTo(200,io);
+				}).on("click", ".clear-input-icon", function() {
+					var e = jQuery.Event( 'keydown', { keyCode: 13 } );
+   					$(this).delay(50).fadeTo(300,0).prev("input").val("");
+   					$("#filter-submit").click();
+   					//$(this).next("input[type='submit']").click();
+				});
             } else {
                 loading_or_total = (
                     <span>
@@ -257,11 +280,11 @@ function (collection, $, class_, React, globals) {
                         <tr class="nosort table-controls">
                             <th colSpan={columns.length}>
                                 {loading_or_total}
-                                <form class="table-filter" onKeyUp={this.handleKeyUp} data-skiprequest="true" data-removeempty="true" >
-                                    <input disabled={this.state.communicating || undefined} name="q" type="search" defaultValue={searchTerm} placeholder="Filter table by..." />
+                                <form class="table-filter" onKeyUp={this.handleKeyUp} data-skiprequest="true" data-removeempty="true">
+                                    <input disabled={this.state.communicating || undefined} name="q" type="search" defaultValue={searchTerm} placeholder="Filter table by..." class="filter" id="table-filter" /><i class="icon-remove-sign clear-input-icon"></i>
                                     <input ref="sorton" type="hidden" name="sorton" defaultValue={sortOn !== defaultSortOn ? sortOn : ''} />
                                     <input ref="reversed" type="hidden" name="reversed" defaultValue={!!reversed || ''} />
-                                    <input ref="submitButton" type="submit" hidden="hidden" />
+                                    <input ref="submitButton" type="submit" hidden="hidden" id="filter-submit" />
                                 </form>
                             </th>
                         </tr>
@@ -281,6 +304,7 @@ function (collection, $, class_, React, globals) {
             while (target.tagName != 'TH') {
                 target = target.parentElement;
             }
+            debugger;
             var cellIndex = target.cellIndex;
             var reversed = '';
             var sorton = this.refs.sorton.getDOMNode()
