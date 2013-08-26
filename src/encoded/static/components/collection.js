@@ -251,7 +251,7 @@ function (collection, $, class_, React, globals) {
                
                 // Show clear filter icon if filter input has content
                 $(document).ready(function() {
-					if ( $(".filter").val() ) {
+					if ( $(".filter").val() != "" ) {
 						$(".clear-input-icon").attr("cursor","pointer");
 					}
 				});
@@ -261,9 +261,8 @@ function (collection, $, class_, React, globals) {
     				var io = $(this).val().length ? 1 : 0 ;
     				$(this).next(".clear-input-icon").stop().fadeTo(200,io);
 				}).on("click", ".clear-input-icon", function() {
-					var e = jQuery.Event( 'keydown', { keyCode: 13 } );
+					$("#filter-submit").click();
    					$(this).delay(50).fadeTo(300,0).prev("input").val("");
-   					$("#filter-submit").click();
    					//$(this).next("input[type='submit']").click();
 				});
             } else {
