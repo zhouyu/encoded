@@ -19,7 +19,7 @@ function (React) {
                             <div id="footer-links">
                                 <ul>
                                     <li><a href="/">ENCODE</a></li>
-                                    <li><a href="">Contact</a></li>
+                                    <li><a href="mailto:encode-help@lists.stanford.edu" rel="nofollow">Contact</a></li>
                                     <li><a href="http://www.stanford.edu/site/terms.html">Terms of Use</a></li>
                                 </ul>
                             </div>
