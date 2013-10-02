@@ -18,6 +18,7 @@ env:
 services:
   - elasticsearch
 before_install:
+  - python -c "import sys; print '\n'.join(sys.path)"
   - curl $CONNECT_URL > $CONNECT_DOWNLOAD
   - unzip $CONNECT_DOWNLOAD Sauce-Connect.jar
   - >
