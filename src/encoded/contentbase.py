@@ -51,7 +51,10 @@ from uuid import (
 )
 from .objtemplate import ObjectTemplate
 from .schema_formats import is_accession
-from .schema_utils import validate_request
+from .schema_utils import (
+    validate_request,
+    validate_data,
+)
 from .stats import requests_timing_hook
 from .storage import (
     DBSession,
@@ -165,8 +168,6 @@ def validate_item_content_put(context, request):
 
 def validate_item_content_patch(context, request):
     data = context.properties.copy()
-    if 'schema_version' in data:
-        del data['schema_version']
     data.update(request.json)
     schema = context.schema
     if schema is None:
@@ -421,8 +422,31 @@ class Item(object):
         return self.__parent__.schema
 
     @property
+    def schema_version(self):
+        return self.__parent__.schema_version
+
+    @property
     def properties(self):
-        return self.model['']
+        properties = self.model['']
+        if self.schema_version is None:
+            return properties
+        props_version = properties.get('schema_version')
+        if props_version != self.schema_version:
+            return self.upgrade(properties)
+        return properties
+
+    def upgrade(self, properties):
+        ''' Upgrade object by applying new schema defaults
+        '''
+        properties = properties.copy()
+        if 'schema_version' in properties:
+            del properties['schema_version']
+        properties['uuid'] = str(self.uuid)
+        validated, errors = validate_data(
+            self.schema, properties, properties, upgrading=True)
+        if errors:
+            raise ValueError('upgrading properties failed', errors)
+        return validated
 
     @property
     def uuid(self):
@@ -682,6 +706,7 @@ class Collection(Mapping):
     __metaclass__ = CustomItemMeta
     Item = Item
     schema = None
+    schema_version = None
     properties = OrderedDict()
     item_type = None
     unique_key = None
@@ -723,6 +748,10 @@ class Collection(Mapping):
                 name for name, prop in self.schema['properties'].iteritems()
                 if 'linkTo' in prop or 'linkTo' in prop.get('items', ())
             ]
+            try:
+                self.schema_version = self.schema['properties']['schema_version']['default']
+            except KeyError:
+                pass
 
     def __getitem__(self, name):
         try:

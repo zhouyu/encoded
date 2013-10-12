@@ -50,6 +50,11 @@ class AccessKey(Collection):
         keys = ['access_key_id']
         name_key = 'access_key_id'
 
+        @property
+        def properties(self):
+            # No need for upgrade here
+            return self.model['']
+
         def __ac_local_roles__(self):
             owner = 'userid.%s' % self.properties['user']
             return {owner: 'role.owner'}

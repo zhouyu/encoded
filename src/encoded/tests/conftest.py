@@ -81,6 +81,11 @@ def app(request, check_constraints, zsa_savepoints, app_settings):
     return main({}, **app_settings)
 
 
+@fixture
+def root(app):
+    return app.root_factory(app)
+
+
 @pytest.datafixture
 def workbook(app, app_settings):
     from webtest import TestApp
