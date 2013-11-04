@@ -6,6 +6,7 @@
     "type": "object",
     "required": ["organism", "label"],
     "facets": {"Lab": "lab.title", "Organism": "organism.name"},
+    "boost": {"gene_name": 5, "label": 4, "organism.name": 2, "dbxref": 3, "aliases": 2},
     "identifyingProperties": ["uuid", "label-organism.name", "aliases"],
     "additionalProperties": false,
     "mixinProperties": [
