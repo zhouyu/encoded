@@ -6,6 +6,7 @@
     "type": "object",
     "required": [ "award", "lab", "antibody", "status", "target" ],
     "facets":{"Approval Status": "status", "Target Organism": "target.organism.name", "Clonality": "antibody.clonality", "Source": "antibody.source.title", "Host Organism": "antibody.host_organism.name", "Isotype": "antibody.isotype", "Lab": "lab.title"},
+    "boost": {"target.organism.name": 5, "antibody.host_organism.name": 1, "target.gene_name": 5, "target.label": 5, "target.dbxref": 4, "target.aliases": 3, "antibody.antigen_description": 3},
     "additionalProperties": false,
     "mixinProperties": [
         { "$ref": "mixins.json#/schema_version" },
