@@ -8,6 +8,7 @@
     "required": ["award", "lab"],
     "calculated_props": ["organ_slims", "system_slims", "developmental_slims"],
     "facets": {"Lab": "lab.title", "Assay": "assay_term_name", "Organism": "target.organism.name", "System": "system_slims", "Developmental Slim": "developmental_slims",  "Organ": "organ_slims"},
+    "boost": {"assay_term_name": 5, "description": 2, "geo_dbxref": 3, "encode2_dbxref": 3, "aliases": 3 , "organ_slims": 4, "system_slims": 4, "developmental_slims": 4, "target.gene_name": 5, "target.label": 5, "target.organism.name": 1, "target.dbxref": 3, "target.aliases": 2, "biosample_term_name": 5, "document.description": 1 },
     "approvalRequired": ["assay_term_id", "biosample_term_id", "biosample_type"],
     "identifyingProperties": ["uuid", "accession" , "aliases"],
     "additionalProperties": false,
