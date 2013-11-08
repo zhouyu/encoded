@@ -532,7 +532,7 @@ class Experiments(Collection):
                 {'$value': '{slim}', '$repeat': 'slim developmental_slims', '$templated': True}
             ],
         }
-        embedded = set(['files', 'replicates.antibody', 'replicates.library.documents.lab', 'replicates.library.documents.submitted_by', 'replicates.library.documents.award', 'replicates.library.biosample.donor', 'replicates.library.biosample.submitted_by', 'submitted_by', 'lab', 'award', 'possible_controls', 'target.organism', 'documents.lab', 'documents.award', 'documents.submitted_by'])
+        embedded = set(['files', 'replicates.antibody', 'replicates.library.documents.lab', 'replicates.library.documents.submitted_by', 'replicates.library.documents.award', 'replicates.library.biosample.submitted_by', 'replicates.library.biosample.donor.organism', 'submitted_by', 'lab', 'award', 'possible_controls', 'target.organism', 'documents.lab', 'documents.award', 'documents.submitted_by'])
         rev = {
             'replicates': ('replicate', 'experiment'),
         }
@@ -584,7 +584,7 @@ class RNAiCharacterization(Collection):
         keys = ALIAS_KEYS
 
 
-@location('dataset')
+@location('datasets')
 class Dataset(Collection):
     item_type = 'dataset'
     schema = load_schema('dataset.json')
@@ -592,4 +592,4 @@ class Dataset(Collection):
         'title': 'Datasets',
         'description': 'Listing of datasets',
     }
-    item_keys = ALIAS_KEYS
+    item_keys = ACCESSION_KEYS + ALIAS_KEYS
