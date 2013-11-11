@@ -203,7 +203,7 @@
         "starting_amount": {
             "title": "Starting amount",
             "description": "The initial quantity of cells or tissue obtained.",
-            "type": "integer"
+            "type": "number"
         },
         "starting_amount_units": {
             "title": "Starting amount units",
