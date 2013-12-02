@@ -128,6 +128,7 @@ class AntibodyLot(Collection):
     ]
     item_rev = {
         'characterizations': ('antibody_characterization', 'characterizes'),
+        "reviews":('antibody_characterization_review', 'reviews'),
     }
 
 
@@ -369,6 +370,18 @@ class AntibodyCharacterization(Collection):
 
     class Item(ItemWithAttachment, Collection.Item):
         embedded = ['submitted_by', 'lab', 'award', 'target']
+        keys = ALIAS_KEYS
+
+@location('antibody-characterization-reviews')
+class AntibodyCharacterizationReview(Collection):
+    item_type = "antibody_characterization_review"
+    schema = load_schema("antibody_characterization_review.json")
+    properties = {
+        'title': 'Antibody characterization reviews',
+        'description': 'Listing of antibody characterization reviews by cell type',
+    }
+    class Item(ItemWithAttachment, Collection.Item):
+        embedded = ['submitted_by', 'lab', 'award']
         keys = ALIAS_KEYS
 
 
