@@ -12,6 +12,10 @@ from .contentbase import (
     Created,
     make_subrequest,
 )
+from sqlalchemy import (
+    Integer,
+    cast,
+)
 from .stats import requests_timing_hook
 from .storage import (
     DBSession,
@@ -61,7 +65,7 @@ def index(context, request):
             last_xmin = status['_source']['xmin']
 
     if last_xmin is not None:
-        txns = txns.filter(TransactionRecord.xid >= last_xmin)
+        txns = txns.filter(cast(TransactionRecord.xmin, Integer) >= last_xmin)
 
     invalidated = set()
     updated = set()
@@ -69,7 +73,7 @@ def index(context, request):
     txn_count = 0
     for txn in txns.all():
         txn_count += 1
-        max_xid = max(max_xid, txn.xid)
+        max_xid = max(max_xid, txn.xmin)
         invalidated.update(UUID(uuid) for uuid in txn.data.get('invalidated', ()))
         updated.update(UUID(uuid) for uuid in txn.data.get('updated', ()))
 

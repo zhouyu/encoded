@@ -2,6 +2,7 @@ from UserDict import DictMixin
 from sqlalchemy import (
     Column,
     DDL,
+    FetchedValue,
     ForeignKey,
     event,
     func,
@@ -229,16 +230,22 @@ class TransactionRecord(Base):
     data = Column(JSON)
     timestamp = Column(
         types.DateTime, nullable=False, server_default=func.now())
-    # A server_default is necessary for the notify_ddl overwrite to work
-    xid = Column(types.BigInteger, nullable=True, server_default=null())
+    xmin = Column(types.Integer, server_default=FetchedValue())  # PostgreSQL special column
+
+
+# http://docs.sqlalchemy.org/en/latest/core/ddl.html#sqlalchemy.schema.CreateColumn
+@compiles(schema.CreateColumn, 'postgresql')
+def skip_xmin(element, compiler, **kw):
+    if element.element.name == 'xmin':
+        return
+    return compiler.visit_create_column(element, **kw)
 
 
 notify_ddl = DDL("""
-    ALTER TABLE %(table)s ALTER COLUMN "xid" SET DEFAULT txid_current();
     CREATE OR REPLACE FUNCTION encoded_transaction_notify() RETURNS trigger AS $$
     DECLARE
     BEGIN
-        PERFORM pg_notify('encoded.transaction', NEW.xid::TEXT);
+        PERFORM pg_notify('encoded.transaction', NEW.xmin::TEXT);
         RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
