@@ -4,7 +4,7 @@
     "id": "/profiles/antibody_characterization_review.json",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
-    "required": [ "award", "lab", "reviews", "biosample_term_id", "organism", "lane", "status"],
+    "required": [ "award", "lab", "reviews", "biosample_term_id", "organism", "status"],
     "identifyingProperties": ["uuid", "aliases"],
     "additionalProperties": false,
     "mixinProperties": [
@@ -14,14 +14,7 @@
         { "$ref": "mixins.json#/submitted" },
         { "$ref": "characterization_review.json#/properties" },
         { "$ref": "mixins.json#/notes" },
-
     ],
-     "dependencies": {
-        "biosample_term_id": ["organism", "lane", "status"],
-        "organism": ["biosample_term_id", "lane", "status"],
-        "lane": ["biosample_term_id", "organism", "status"],
-        "status": ["biosample_term_id", "organism", "lane"]
-    },
     "properties": {
         "schema_version": {
             "default": "1"
