@@ -13,7 +13,7 @@
         { "$ref": "mixins.json#/attribution" },
         { "$ref": "mixins.json#/submitted" },
         { "$ref": "characterization_review.json#/properties" },
-        { "$ref": "mixins.json#/notes" },
+        { "$ref": "mixins.json#/notes" }
     ],
     "properties": {
         "schema_version": {
