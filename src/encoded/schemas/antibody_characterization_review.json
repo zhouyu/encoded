@@ -13,6 +13,7 @@
         { "$ref": "mixins.json#/attribution" },
         { "$ref": "mixins.json#/submitted" },
         { "$ref": "characterization_review.json#/properties" },
+        { "$ref": "mixins.json#/biosample_classification" },
         { "$ref": "mixins.json#/notes" }
     ],
     "properties": {
