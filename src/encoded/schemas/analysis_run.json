@@ -1,0 +1,129 @@
+{
+    "title": "Analysis run",
+    "description": "Schema for submitting information regarding a single run of analysis.",
+    "id": "/profiles/analysis_run.json",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "required": [],
+    "additionalProperties": false,
+    "mixinProperties": [
+        { "$ref": "mixins.json#/schema_version" },
+        { "$ref": "mixins.json#/uuid" }
+    ],
+    "properties": {
+        "schema_version": {
+            "default": "1"
+        },
+       "start_time": {
+            "title": "Start time",
+            "comment": "Date submitted as YYYY-MM-DDTHH:MM:SSTZD (TZD is the time zone designator; use Z to express time in UTC or for time expressed in local time add a time zone offset from UTC +HH:MM or -HH:MM).",
+            "type":  "date-time"
+        },
+       "end_time": {
+            "title": "End time",
+            "comment": "Date submitted as YYYY-MM-DDTHH:MM:SSTZD (TZD is the time zone designator; use Z to express time in UTC or for time expressed in local time add a time zone offset from UTC +HH:MM or -HH:MM).",
+            "type":  "date-time"
+        },
+        "error_message": {
+            "title": "Error message",
+            "description": "The reason the analysis was stopped.",
+            "type": "string"
+        },
+        "analysis": {
+            "title": "Analysis",
+            "description": "The particular computational analysis run.",
+            "comment": "See analysis.json for a list of available identifiers.",
+            "type": "string"
+        },
+        "configuration": {
+            "title": "Configuration",
+            "description": "The particular configuration of analysis run.",
+            "comment": "See analysis_configuration.json for a list of available identifiers.",
+            "type": "string"
+        },
+        "software_version": {
+            "title": "Software and versions",
+            "description": "The software and version used in the analysis run.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Software and version",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "software": {
+                        "title": "Software",
+                        "comment": "See software.json for a list of available identifiers.",
+                        "type": "string"
+                    },
+                    "version": {
+                        "title": "Software version",
+                        "comment": "See software_version.json for a list of available identifiers.",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "inputs":{
+            "title": "Inputs",
+            "description": "Input files for analysis run.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Input",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "parameter": {
+                        "title": "Type",
+                        "description": "The name of the input parameter.",
+                        "type": "string"
+                    },
+                    "files": {
+                        "title": "Data files",
+                        "type": "array",
+                        "items": {
+                            "title": "Data file",
+                            "comment": "See file.json for a list of available identifiers.",
+                            "type": "string",
+                            "linkTo": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "outputs":{
+            "title": "Outputs",
+            "description": "Output files for analysis run.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Input",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "parameter": {
+                        "title": "Type",
+                        "description": "The name of the output parameter.",
+                        "type": "string"
+                    },
+                    "files": {
+                        "title": "Data files",
+                        "type": "array",
+                        "items": {
+                            "title": "Data file",
+                            "comment": "See file.json for a list of available identifiers.",
+                            "type": "string",
+                            "linkTo": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "command_line": {
+            "title": "Command line",
+            "description": "The command line passed to analysis glue script.",
+            "type": "string"
+        }
+    }
+}

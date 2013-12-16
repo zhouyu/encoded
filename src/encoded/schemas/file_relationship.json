@@ -8,46 +8,32 @@
     "additionalProperties": false,
     "mixinProperties": [
         { "$ref": "mixins.json#/schema_version" },
-        { "$ref": "mixins.json#/uuid" },
-        { "$ref": "mixins.json#/attribution" },
-        { "$ref": "mixins.json#/standard_status" },
-        { "$ref": "mixins.json#/submitted" },
-        { "$ref": "mixins.json#/notes" }
+        { "$ref": "mixins.json#/uuid" }
     ],
     "properties": {
         "schema_version": {
             "default": "1"
         },
-        "encode2_dbxrefs": {
-            "title": "Previous ENCODE IDs",
-            "type": "array",
-            "default": [],
-            "items": {
-                "title": "Previous ENCODE ID",
-                "type":  "string"
-            }
-        },
         "derived_from": {
             "title": "Generated from",
-            "description": "The files participating as inputs into software to produce this output file.",
-            "type":  "array",
-            "default": [],
-            "items": {
-                "comment": "See file.json for a list of available identifiers.",
-                "type": "string",
-                "linkTo": "file"
+            "description": "The particular analysis that was run to generate the file.",
+            "type":  "object",
+            "additionalProperties": false,
+            "properties": {
+                "analysis_run": {
+                    "title": "Analysis run",
+                     "comment": "See analysis.json for a list of available identifiers.",
+                     "type": "string"
+                },
+                "output_type": {
+                    "title": "Ouput Type",
+                    "description": "The type the type of output.",
+                    "comment": "Corresponds to analysis_run.outputs.parameter",
+                    "XXXcomment": "Should this be an enum?",
+                    "type": "string"
+                }
             }
-        },
-        "controls_for": {
-            "title": "Controls for",
-            "description": "The data files that this file serves as a scientific control. ",
-            "type":  "array",
-            "default": [],
-            "items": {
-                "comment": "See file.json for a list of available identifiers.",
-                "type": "string",
-                "linkTo": "file"
-            }
+
         },
         "replaced_by": {
             "title": "Superseded by" ,

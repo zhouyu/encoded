@@ -1,0 +1,53 @@
+{
+    "title": "Analysis configuration",
+    "description": "Schema for submitting the particular configuration of an analysis",
+    "id": "/profiles/analysis_configuration.json",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "required": [],
+    "additionalProperties": false,
+    "identifyingProperties": ["uuid", "name"],
+    "mixinProperties": [
+        { "$ref": "mixins.json#/schema_version" },
+        { "$ref": "mixins.json#/uuid" }
+    ],
+    "properties": {
+        "schema_version": {
+            "default": "1"
+        },
+       "name": {
+            "title": "Name",
+            "description": "Unique name of a particular analysis configuration.",
+            "type":  "string"
+        },
+        "description": {
+            "title": "Description",
+            "type": "string"
+        },
+        "configurations": {
+            "title": "Configurations",
+            "description": "The analysis applied for a combination of replicates.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Configuration",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "title": "Type",
+                        "comment": "Corresponds to analysis.configurations.name",
+                        "XXXcomment": "Is there an explicit link to analysis.configurations object or is this just an enum?",
+                        "type": "string"
+                    },
+                    "value": {
+                        "title": "Value",
+                        "description": "A file name.",
+                        "XXXcomment": "What are the other values that can bee applied here other than file name? Can this be type=uri?",
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

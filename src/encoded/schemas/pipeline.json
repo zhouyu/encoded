@@ -1,0 +1,65 @@
+{
+    "title": "Pipeline",
+    "description": "Schema for submitting a series of analysis for a given data type.",
+    "id": "/profiles/pipeline.json",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "required": [],
+    "additionalProperties": false,
+    "mixinProperties": [
+        { "$ref": "mixins.json#/schema_version" },
+        { "$ref": "mixins.json#/uuid" }
+    ],
+    "properties": {
+        "schema_version": {
+            "default": "1"
+        },
+       "name": {
+            "title": "Name",
+            "description": "Unique name of the pipeline.",
+            "type":  "string",
+            "pattern": "[a-z][0-9\\-]"
+        },
+        "title": {
+            "title": "Title",
+            "description": "The preferred viewable name of the pipeline.",
+            "type": "string"
+        },
+        "version": {
+            "title": "Version",
+            "description": "The version of a particular pipeline.",
+            "comment": "Increments with each change to the series of analysis." ,
+            "type": "integer"
+        },
+        "data_type": {
+            "title": "Data type",
+            "description": "Data type that pipeline is applicable for.",
+            "XXXcomment": "Will this link to OBI numbers or is this under controlled vocabulary?",
+            "type": "string"
+        },
+        "replicate_analysis": {
+            "title": "Replicate analyses",
+            "description": "The analysis applied for each replicate.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Replicate analysis",
+                "comment": "See analysis.json for a list of available identifiers.",
+                "type": "string",
+                "linkTo": "analysis"
+            }
+        },
+        "combined_analysis": {
+            "title": "Combined analyses",
+            "description": "The analysis applied for a combination of replicates.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Combined analysis",
+                "comment": "See analysis.json for a list of available identifiers.",
+                "type": "string",
+                "linkTo": "analysis"
+            }
+        }
+    }
+}

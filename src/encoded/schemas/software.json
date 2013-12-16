@@ -1,19 +1,15 @@
 {
     "title": "Software",
-    "description": "Schema for submitting analysis software and parameters.",
+    "description": "Schema for submitting analysis software.",
     "id": "/profiles/software.json",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
-    "required": ["name", "arguments", "lab", "award", "software_type"],
+    "required": [],
     "additionalProperties": false,
+    "identifyingProperties": ["uuid", "name"],
     "mixinProperties": [
         { "$ref": "mixins.json#/schema_version" },
-        { "$ref": "mixins.json#/uuid" },
-        { "$ref": "mixins.json#/aliases" },
-        { "$ref": "mixins.json#/attribution" },
-        { "$ref": "mixins.json#/standard_status" },
-        { "$ref": "mixins.json#/submitted" },
-        { "$ref": "mixins.json#/notes" }
+        { "$ref": "mixins.json#/uuid" }
     ],
     "properties": {
         "schema_version": {
@@ -21,13 +17,18 @@
         },
         "name": {
             "title": "Name",
-            "description": "Unique name of the software package or pipeline.",
+            "description": "Unique name of the software package.",
             "type":  "string",
             "pattern": "[a-z][0-9\\-]"
         },
         "title": {
             "title": "Title",
             "description": "The preferred viewable name of the software.",
+            "type": "string"
+        },
+        "description": {
+            "title": "Description",
+            "description": "The human readable description of the software.",
             "type": "string"
         },
         "software_type": {
@@ -37,45 +38,9 @@
             "enum" : [
                 "mapper",
                 "peakcaller",
-                "other",
-                "pipeline"
+                "format_converter",
+                "other"
             ]
-        },
-        "software_version": {
-            "title": "Version",
-            "type": "string"
-        },
-        "arguments": {
-            "title": "Command line arguments",
-            "description": "The arguments used to run the software.",
-            "type": "string"
-        },
-        "dependencies": {
-            "title": "Dependencies",
-            "description": "The list of specific software dependencies.",
-            "type": "string"
-        },
-        "instructions": {
-            "title": "Instructional documents",
-            "description": "Documents with detailed instructions and protocols for running the software.",
-            "type": "array",
-            "default": [],
-            "items": {
-                "title": "Instructional document",
-                "description": "A document with detailed instructions and protocols for running the software.",
-                "comment": "See document.json for a list of available identifiers.",
-                "type": "string",
-                "linkTo": "document"
-            }
-        },
-        "encode2_dbxrefs": {
-            "title": "Previous ENCODE IDs",
-            "type": "array",
-            "default": [],
-            "items": {
-                "title": "Previous ENCODE ID",
-                "type":  "string"
-            }
         },
         "references": {
             "title": "References",
@@ -108,5 +73,4 @@
             "format": "uri"
         }
     }
-
 }

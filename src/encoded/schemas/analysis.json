@@ -1,0 +1,226 @@
+{
+    "title": "Analysis",
+    "description": "Schema for submitting a computational analysis that transforms input files to output files.",
+    "id": "/profiles/analysis.json",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "required": [],
+    "additionalProperties": false,
+    "identifyingProperties": ["uuid", "name"],
+    "mixinProperties": [
+        { "$ref": "mixins.json#/schema_version" },
+        { "$ref": "mixins.json#/uuid" }
+    ],
+    "properties": {
+        "schema_version": {
+            "default": "1"
+        },
+       "name": {
+            "title": "Name",
+            "description": "Unique name of the analysis.",
+            "type":  "string",
+            "pattern": "[a-z][0-9\\-]"
+        },
+        "title": {
+            "title": "Title",
+            "description": "The preferred viewable name of the analysis.",
+            "type": "string"
+        },
+        "version": {
+            "title": "Version",
+            "description": "The version of a particular analysis,",
+            "comment": "Increments with each change to the software used in the analysis." ,
+            "type": "integer"
+        },
+        "description": {
+            "title": "Description",
+            "description": "The human readable description of the analysis.",
+            "type": "string"
+        },
+        "software": {
+            "title": "Software",
+            "description": "The software used in the analysis.",
+            "type": "array",
+            "items": {
+                "comment": "See software.json for a list of available identifiers.",
+                "type": "string",
+                "linkTo": "software"
+            }
+        },
+        "inputs": {
+            "title": "Inputs",
+            "description": "The input parameters used in the analysis.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Input",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                   "name": {
+                        "title": "Type",
+                        "description": "The name of the parameter.",
+                        "type": "string"
+                   },
+                   "description": {
+                        "title": "Description",
+                        "type": "string"
+                    },
+                    "format": {
+                        "title": "Format",
+                        "description": "Format of parameter or file format.",
+                        "type": "string",
+                        "enum": [
+                            "bam",
+                            "bed12",
+                            "bed12+3",
+                            "bed12+3.bigBed",
+                            "bed15",
+                            "bed3",
+                            "bed4",
+                            "bed5",
+                            "bed6",
+                            "bed6+3",
+                            "bed6+3.bigBed",
+                            "bed8",
+                            "bed9",
+                            "bed9+1",
+                            "bed9+1.bigBed",
+                            "bed9+2",
+                            "bed9+2.bigBed",
+                            "bigWig",
+                            "broadPeak",
+                            "fastq",
+                            "gtf",
+                            "narrowPeak",
+                            "narrowPeak.bigBed",
+                            "number",
+                            "string"
+                        ]
+                    }
+                } 
+            }
+        },
+        "configurations": {
+            "title": "Configurations",
+            "description": "The configuration parameters used in the analysis.",
+            "comment": "Less variable parameters compared to inputs.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Configuration",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                   "name": {
+                        "title": "Type",
+                        "description": "The name of the parameter.",
+                        "comment": "Shared name space with input",
+                        "type": "string"
+                   },
+                   "description": {
+                        "title": "Description",
+                        "type": "string"
+                    },
+                    "format": {
+                        "title": "Format",
+                        "description": "Format of parameter or file format.",
+                        "type": "string",
+                        "enum": [
+                            "bam",
+                            "bed12",
+                            "bed12+3",
+                            "bed12+3.bigBed",
+                            "bed15",
+                            "bed3",
+                            "bed4",
+                            "bed5",
+                            "bed6",
+                            "bed6+3",
+                            "bed6+3.bigBed",
+                            "bed8",
+                            "bed9",
+                            "bed9+1",
+                            "bed9+1.bigBed",
+                            "bed9+2",
+                            "bed9+2.bigBed",
+                            "bigWig",
+                            "broadPeak",
+                            "fastq",
+                            "gtf",
+                            "narrowPeak",
+                            "narrowPeak.bigBed",
+                            "number",
+                            "string"
+                        ]
+                    }
+                } 
+            }
+        },
+        "outputs": {
+            "title": "Ouputs",
+            "description": "The output parameters used in the analysis.",
+            "type": "array",
+            "default": [],
+            "items": {
+                "title": "Ouput",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                   "name": {
+                        "title": "Type",
+                        "description": "The name of the parameter.",
+                        "type": "string"
+                   },
+                   "description": {
+                        "title": "Description",
+                        "type": "string"
+                    },
+                    "format": {
+                        "title": "Format",
+                        "description": "Format of parameter or file format.",
+                        "type": "string",
+                        "enum": [
+                            "bam",
+                            "bed12",
+                            "bed12+3",
+                            "bed12+3.bigBed",
+                            "bed15",
+                            "bed3",
+                            "bed4",
+                            "bed5",
+                            "bed6",
+                            "bed6+3",
+                            "bed6+3.bigBed",
+                            "bed8",
+                            "bed9",
+                            "bed9+1",
+                            "bed9+1.bigBed",
+                            "bed9+2",
+                            "bed9+2.bigBed",
+                            "bigWig",
+                            "broadPeak",
+                            "fastq",
+                            "gtf",
+                            "narrowPeak",
+                            "narrowPeak.bigBed",
+                            "number",
+                            "string"
+                        ]
+                    }
+                } 
+            }
+        },
+        "glue_script": {
+            "title": "Glue script",
+            "description": "The name of the glue script associated with the analysis",
+            "XXXcomment": "Is this connected to software object at all",
+            "type": "string"
+        },
+        "glue_template": {
+            "title": "Glue template",
+            "description": "Command line template for glue script substituting $vars with values from input/configuration/output.",
+            "type": "string"
+        }
+    }
+}
