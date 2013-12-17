@@ -120,7 +120,7 @@
                     "value": {
                         "title": "Value",
                         "description": "The statistical output.",
-                        "type": "number",
+                        "type": "number"
                     }
                 }
             }
