@@ -26,7 +26,7 @@
             "description": "The version of a particular software.",
             "comment": "The version string when version option is used on the software." ,
             "type": "string",
-            "pattern": "[a-z][0-9\\-]",
+            "pattern": "[a-z][0-9\\-]"
         },
         "dcc_md5": {
             "title": "MD5sum",
