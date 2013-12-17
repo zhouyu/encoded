@@ -14,6 +14,12 @@
         "schema_version": {
             "default": "1"
         },
+        "file": {
+            "title": "Data file",
+            "comment": "See file.json for a list of available identifiers.",
+            "type": "string",
+            "linkTo": "file"
+        },
         "derived_from": {
             "title": "Generated from",
             "description": "The particular analysis that was run to generate the file.",
