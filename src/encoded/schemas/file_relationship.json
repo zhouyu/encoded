@@ -48,9 +48,16 @@
             "type": "string",
             "linkTo": "file"
         },
-        "paired_with": {
-            "title": "File pairing",
-            "description": "The file that corresponds with this file.",
+        "first_end": {
+            "title": "First end",
+            "description": "Points to the first end of the read pair.",
+            "comment": "See file.json for a list of available identifiers.",
+            "type": "string",
+            "linkTo": "file"
+        },
+        "second_end": {
+            "title": "Second end",
+            "description": "Points to the second end of the read pair.",
             "comment": "See file.json for a list of available identifiers.",
             "type": "string",
             "linkTo": "file"
