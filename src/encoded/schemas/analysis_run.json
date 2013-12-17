@@ -116,6 +116,11 @@
                             "type": "string",
                             "linkTo": "file"
                         }
+                    },
+                    "value": {
+                        "title": "Value",
+                        "description": "The statistical output.",
+                        "type": "number",
                     }
                 }
             }
