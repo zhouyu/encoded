@@ -33,13 +33,15 @@
             "title": "Analysis",
             "description": "The particular computational analysis run.",
             "comment": "See analysis.json for a list of available identifiers.",
-            "type": "string"
+            "type": "string",
+            "linkTo": "analysis"
         },
         "configuration": {
             "title": "Configuration",
             "description": "The particular configuration of analysis run.",
             "comment": "See analysis_configuration.json for a list of available identifiers.",
-            "type": "string"
+            "type": "string",
+            "linkTo": "analysis_configuration"
         },
         "software_version": {
             "title": "Software and versions",
@@ -54,12 +56,14 @@
                     "software": {
                         "title": "Software",
                         "comment": "See software.json for a list of available identifiers.",
-                        "type": "string"
+                        "type": "string",
+                        "linkTo": "software"
                     },
                     "version": {
                         "title": "Software version",
                         "comment": "See software_version.json for a list of available identifiers.",
-                        "type": "string"
+                        "type": "string",
+                        "linkTo": "software_version"
                     }
                 }
             }

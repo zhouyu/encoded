@@ -29,7 +29,8 @@
                 "analysis_run": {
                     "title": "Analysis run",
                      "comment": "See analysis.json for a list of available identifiers.",
-                     "type": "string"
+                     "type": "string",
+                     "linkTo": "analysis"
                 },
                 "output_type": {
                     "title": "Ouput Type",
