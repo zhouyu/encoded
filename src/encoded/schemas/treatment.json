@@ -27,7 +27,8 @@
             "enum": [
                 "protein",
                 "chemical",
-                "infection"
+                "infection",
+                "unknown"
             ]
         },
         "protocols": {
