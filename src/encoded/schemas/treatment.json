@@ -23,7 +23,7 @@
             "title": "Type",
             "description": "The classification of the treatment.",
             "type": "string",
-            "default": "chemical",
+            #"default": "chemical",
             "enum": [
                 "protein",
                 "chemical",
