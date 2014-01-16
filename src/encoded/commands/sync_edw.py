@@ -162,8 +162,9 @@ def get_dataset_or_experiment(app, accession, phase=edw_file.ENCODE_PHASE_ALL):
         logger.error("Encode2 dataset %s maps to multiple: (%s)" % (accession, lookup))
         return None
     elif lookup:
-        ec3_acc = lookup[0]
+        ec3_acc = lookup.pop()
         logger.info("Encode2 dataset %s maps to %s " % (accession, ec3_acc))
+        lookup.add(ec3_acc)
     else:
         ec3_acc = accession
 
@@ -220,9 +221,12 @@ def get_phase(app, ds_url):
     url2acc = re.compile('\/(experiments|datasets)\/(ENCSR.{6})\/')
     acc = url2acc.match(ds_url).group(2)
 
-    if encode3_to_encode2[acc]:
-        return edw_file.ENCODE_PHASE_2
-    return edw_file.ENCODE_PHASE_3
+    try:
+        if encode3_to_encode2[acc]:
+            return edw_file.ENCODE_PHASE_2
+        return edw_file.ENCODE_PHASE_3
+    except:
+        import pdb;pdb.set_trace()
 
 
 def create_replicate(app, exp, bio_rep_num, tech_rep_num, dry_run=False):
@@ -340,18 +344,20 @@ def get_all_datasets(app, phase=edw_file.ENCODE_PHASE_ALL):
     global encode2_to_encode3
     global encode3_to_encode2
 
+    logger.info("Getting all experiments...")
     exp_collection = get_collection(app, EXPERIMENTS)
+    logger.warn("Found %s experiments" % len(exp_collection))
 
     for exp in exp_collection:
         dbxrefs = exp[ENCODE2_EXP_PROP]
         acc = exp['accession']
         for xref in dbxrefs:
-            e2e3 = encode2_to_encode3.get(xref, [])
-            e2e3.append(acc)
+            e2e3 = encode2_to_encode3.get(xref, set())
+            e2e3.add(acc)
             encode2_to_encode3[xref] = e2e3
 
-        e3e2 = encode3_to_encode2.get(acc,[])
-        e3e2.extend(dbxrefs)
+        e3e2 = encode3_to_encode2.get(acc,set())
+        e3e2.update(set(dbxrefs))
         encode3_to_encode2[acc] = e3e2
 
         #experiments[acc] = app.get(exp['@id']).maybe_follow().json
@@ -360,8 +366,11 @@ def get_all_datasets(app, phase=edw_file.ENCODE_PHASE_ALL):
         experiments[acc] = []
 
 
+    logger.info("Getting all datasets...")
     alias_key = re.compile('ucsc_encode_db:')
     ds_collection = get_collection(app, DATASETS)
+    logger.warn("Found %s datasets" % len(ds_collection))
+
     for ds in ds_collection:
         acc = ds['accession']
         aliases = ds[ENCODE2_DS_PROP]
@@ -379,11 +388,7 @@ def get_all_datasets(app, phase=edw_file.ENCODE_PHASE_ALL):
 
         datasets[acc] = ds
         ## don't need replicates or anything.
-
-
-
-
-
+    logger.warn("%s Encode2 experiments can be references" % len(encode2_to_encode3.keys()))
 
 def patch_fileinfo(app, props, propinfo, dry_run=False):
     # PATCH properties to file in app
@@ -559,6 +564,9 @@ def main():
 
 
     app = make_app(args.config_uri, args.username, args.password)
+
+    get_all_datasets(app)
+
     edw = edw_file.make_edw(args.data_host)
 
     edw_files, app_files = get_dicts(app, edw, phase=args.phase)

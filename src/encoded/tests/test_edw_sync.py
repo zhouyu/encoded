@@ -82,9 +82,14 @@ def test_import_file(workbook, testapp):
     # ignoring this because I don't want to deal with tearing down ES  posts
 
     import re
+
+
     input_file = 'import_in.1.tsv'
     f = open(EDW_FILE_TEST_DATA_DIR + '/' + input_file)
     reader = DictReader(f, delimiter='\t')
+
+    sync_edw.get_all_datasets(testapp)
+
     for fileinfo in reader:
 
         converted_file = sync_edw.convert_edw(testapp, fileinfo)
@@ -114,6 +119,8 @@ def test_encode3_experiments(workbook, testapp):
     f = open(EDW_FILE_TEST_DATA_DIR + '/' + mock_edw_file)
     reader = DictReader(f, delimiter='\t')
 
+    sync_edw.get_all_datasets(testapp)
+
     edw_mock_p3 = {}
     for fileinfo in reader:
         converted_file = sync_edw.convert_edw(testapp, fileinfo, phase='3')
@@ -131,6 +138,8 @@ def test_encode3_experiments(workbook, testapp):
 def test_file_sync(workbook, testapp):
 
     import re
+
+    sync_edw.get_all_datasets(testapp)
     mock_edw_file = 'edw_file_mock.tsv'
     f = open(EDW_FILE_TEST_DATA_DIR + '/' + mock_edw_file)
     reader = DictReader(f, delimiter='\t')
