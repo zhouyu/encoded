@@ -32,8 +32,8 @@ DEFAULT_INI = 'production.ini'  # Default application initialization file
 ENCODE2_ACC = 'wgEncodeE'  # WARNING: Also in experiment.json and edw_file.py
 ENCODE3_ACC = 'ENC'
 ENCODE3_EXP_ACC = ENCODE3_ACC + 'SR'  # WARNING: Also in experiment.json
-ENCODE2_PROP = 'encode2_dbxrefs' # WARNING: Also in experiment.json
-
+ENCODE2_EXP_PROP = 'encode2_dbxrefs' # WARNING: Also in experiment.json
+ENCODE2_DS_PROP = 'aliases' ## ucsc_encode_db:wgEncodeXXX
 # Schema object names
 FILES = 'files'
 EXPERIMENTS = 'experiments'
@@ -41,7 +41,6 @@ REPLICATES = 'replicates'
 DATASETS = 'datasets'
 USERS = 'users'
 
-SEARCH_EC2 = '/search/?encode2_dbxrefs='
 FILE_PROFILE_URL = '/profiles/file.json'
 
 app_host_name = 'localhost'
@@ -53,8 +52,11 @@ IMPORT_USER = 'IMPORT'
 
 logger = logging.getLogger(__name__)
 
-encode2_to_encode3 = None  # Dict of ENCODE3 accs, keyed by ENCODE 2 acc
+encode2_to_encode3 = {}  # Dict of ENCODE3 accs, keyed by ENCODE 2 acc
 encode3_to_encode2 = {}    # Cache experiment ENCODE 2 ref lists
+
+experiments = {}
+datasets = {}
 
 def convert_edw(app, file_dict, phase=edw_file.ENCODE_PHASE_ALL):
     ''' converts EDW file structure to encoded object'''
@@ -110,7 +112,8 @@ def convert_edw(app, file_dict, phase=edw_file.ENCODE_PHASE_ALL):
             # otherwise we will try tor create the specified one.
 
     if file_dict.has_key('assembly'):
-         file_dict['assembly'] = re.sub(r'(male\.|female\.)', '', file_dict['assembly'])
+        ## HACK - these should not be allowed in EDW
+        file_dict['assembly'] = re.sub(r'(male\.|female\.)', '', file_dict['assembly'])
 
     return file_dict  ## really don't convert None to unicode...
     #return { i : unicode(j) for i,j in file_dict.items() }
@@ -145,74 +148,34 @@ def find_replicate(experiment, file_dict):
         return None
 
 
-def get_encode2_to_encode3(app):
-    # Create and cache list of ENCODE 3 experiments with ENCODE2 accessions
-    # Used to map EDW ENCODE 2 accessions to ENCODE3 accession
-    global encode2_to_encode3
-
-    if encode2_to_encode3 is not None:
-        return encode2_to_encode3
-    encode2_to_encode3 = {}
-    experiments = get_collection(app, EXPERIMENTS)
-    for item in experiments:
-        url = item['@id']
-        resp = app.get(url).maybe_follow()
-        exp = resp.json
-        encode3_acc = exp['@id']
-        logger.info('Get experiment (e2-e3): %s' % (encode3_acc))
-        encode2_accs = get_encode2_accessions(app, encode3_acc)
-        if encode2_accs is not None and len(encode2_accs) > 0:
-            for encode2_acc in encode2_accs:
-                if encode2_acc in encode2_to_encode3.keys():
-                    logger.warning('Multiple ENCODE3 accs for ENCODE2 acc %s,'
-                                    ' replacing %s with %s',
-                                encode2_acc,
-                                encode2_to_encode3[encode2_acc],
-                                encode3_acc)
-                encode2_to_encode3[encode2_acc] = encode3_acc
-    return encode2_to_encode3
-
-
 def get_dataset_or_experiment(app, accession, phase=edw_file.ENCODE_PHASE_ALL):
     # Map ENCODE2 experiment accession to ENCODE3
     # This will fail if EDW references a dataset instead of expt.
+
     global datasets
-    if accession.startswith(ENCODE3_EXP_ACC):
-        ds = exp_or_dataset(app, accession)
+    global experiments
+    global encode2_to_encode3
+    global encode3_to_encode2
 
+    lookup = encode2_to_encode3.get(accession, [])
+    if len(lookup) > 1:
+        logger.error("Encode2 dataset %s maps to multiple: (%s)" % (accession, lookup))
+        return None
+    elif lookup:
+        ec3_acc = lookup[0]
+        logger.info("Encode2 dataset %s maps to %s " % (accession, ec3_acc))
     else:
-        url = SEARCH_EC2 + accession + '&type=experiment'
-        #, headers={'Accept': 'application/json'}
-        resp = app.get(url).maybe_follow()
-        results = resp.json['@graph']
-        if not results:
-            return None #  are datasets implemented in search yet?
-            url = SEARCH_EC2 + accession + '&type=dataset'
-            results = resp.json['@graph']
+        ec3_acc = accession
 
-        if (len(results) !=1):
-            logger.warning("Dataset %s search had multiple results: %s" % (accession, results))
-            return {}
-        ds = app.get(results[0]['@id']).json
+    if (encode3_to_encode2.get(ec3_acc, []) and phase == edw_file.ENCODE_PHASE_3 ):
+        logger.info("Dataset %s is not from phase %s" % (ec3_acc, phase))
+        return None
 
-    if phase == edw_file.ENCODE_PHASE_2 and get_encode2_accessions(app, ds):
-        return ds
-    elif phase == edw_file.ENCODE_PHASE_3 and not get_encode2_accessions(app, ds):
-        return ds
-    elif phase == edw_file.ENCODE_PHASE_ALL:
-        return ds
-
-    logger.info("Dataset %s is not from phase %s" % (accession, phase))
-    return None
-
-
-def exp_or_dataset(app, accession):
-
-    url = '/' + accession + '/'
+    url = '/' + ec3_acc + '/'
     try:
         resp = app.get(url).maybe_follow()
     except AppError:
-        logger.error("Dataset/Experiment %s could not be found." % accession)
+        logger.error("Dataset/Experiment %s could not be found." % ec3_acc)
         return None
 
     if resp.status_code == 200:
@@ -242,7 +205,7 @@ def get_app_fileinfo(app, phase=edw_file.ENCODE_PHASE_ALL):
         fileinfo = resp.json
         # below seems clunky, could search+filter
         if phase != edw_file.ENCODE_PHASE_ALL:
-            file_phase = get_phase(app, fileinfo)
+            file_phase = get_phase(app, fileinfo['dataset'])
             if file_phase != phase:
                     logging.info("File %s is wrong phase (%s)" % (fileinfo['accession'], file_phase))
                     continue
@@ -250,43 +213,14 @@ def get_app_fileinfo(app, phase=edw_file.ENCODE_PHASE_ALL):
     return app_files
 
 
-def is_encode2_experiment(app, accession):
-    # Does this experiment have ENCODE2 accession
-    if accession.startswith(ENCODE2_ACC):
-        return True
-    if len(get_encode2_accessions(app, accession)) > 0:
-        return True
-    return False
+def get_phase(app, ds_url):
 
-
-def get_encode2_accessions(app, dataset):
-    # Get list of ENCODE 2 accessions for this ENCODE 3 experiment(or None)
     global encode3_to_encode2
-    get = False
-    if type(dataset) == dict:
-        encode3_acc = dataset['accession']
-        get= True
-    elif not dataset:
-        return None
-    else:
-        encode3_acc = dataset
 
-    if encode3_acc not in encode3_to_encode2:
-        if not get:
-            logger.info('Get experiment (get e2): %s' % (encode3_acc))
-            dataset = app.get(encode3_acc).maybe_follow().json
-        encode3_to_encode2[encode3_acc] = dataset.get(ENCODE2_PROP, [])
-    encode2_accs = encode3_to_encode2[encode3_acc]
-    if len(encode2_accs) > 0:
-        return encode2_accs
-    return []
+    url2acc = re.compile('\/(experiments|datasets)\/(ENCSR.{6})\/')
+    acc = url2acc.match(ds_url).group(2)
 
-
-
-
-def get_phase(app, fileinfo):
-    # Determine phase of file (ENCODE 2 or ENCODE 3)
-    if is_encode2_experiment(app, fileinfo['dataset']):
+    if encode3_to_encode2[acc]:
         return edw_file.ENCODE_PHASE_2
     return edw_file.ENCODE_PHASE_3
 
@@ -397,6 +331,58 @@ def get_dicts(app, edw, phase=edw_file.ENCODE_PHASE_ALL):
     app_dict = { d['accession']:d for d in app_files }
 
     return edw_dict, app_dict
+
+
+def get_all_datasets(app, phase=edw_file.ENCODE_PHASE_ALL):
+
+    global experiments
+    global datasets
+    global encode2_to_encode3
+    global encode3_to_encode2
+
+    exp_collection = get_collection(app, EXPERIMENTS)
+
+    for exp in exp_collection:
+        dbxrefs = exp[ENCODE2_EXP_PROP]
+        acc = exp['accession']
+        for xref in dbxrefs:
+            e2e3 = encode2_to_encode3.get(xref, [])
+            e2e3.append(acc)
+            encode2_to_encode3[xref] = e2e3
+
+        e3e2 = encode3_to_encode2.get(acc,[])
+        e3e2.extend(dbxrefs)
+        encode3_to_encode2[acc] = e3e2
+
+        #experiments[acc] = app.get(exp['@id']).maybe_follow().json
+        # should lazy load them, we won't always need them all
+        # we do need the replicates however
+        experiments[acc] = []
+
+
+    alias_key = re.compile('ucsc_encode_db:')
+    ds_collection = get_collection(app, DATASETS)
+    for ds in ds_collection:
+        acc = ds['accession']
+        aliases = ds[ENCODE2_DS_PROP]
+        for al in aliases:
+            if not alias_key.match(al):
+                dbxref = alias_key.sub('', al)
+
+                e2e3 = encode2_to_encode3.get(xref, [])
+                e2e3.append(acc)
+                encode2_to_encode3[xref] = e2e3
+
+                e3e2 = encode3_to_encode2.get(acc,[])
+                e3e2.append(dbxref)
+                encode3_to_encode2[acc] = e3e2
+
+        datasets[acc] = ds
+        ## don't need replicates or anything.
+
+
+
+
 
 
 def patch_fileinfo(app, props, propinfo, dry_run=False):

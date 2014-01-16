@@ -15,73 +15,22 @@ EDW_FILE_TEST_DATA_DIR = 'src/encoded/tests/data/edw_file'
 
 TEST_ACCESSION = 'ENCFF001RET'  # NOTE: must be in test set
 
-@pytest.fixture(scope='session')
-def app_settings(server_host_port, elasticsearch_server, connection):
-    from .conftest import _app_settings
-    settings = _app_settings.copy()
-    settings['persona.audiences'] = 'http://%s:%s' % server_host_port
-    settings['elasticsearch.server'] = elasticsearch_server
- #   settings['sqlalchemy.url'] = postgresql_server
-    settings['collection_source'] = 'elasticsearch'
-    return settings
 
-#@pytest.fixture(scope='session')
-#def app(request, app_settings):
-    '''WSGI application level functional testing.
-    '''
-'''    from encoded.storage import DBSession
+@pytest.mark.slow
+def test_get_all_datasets(workbook,testapp):
 
-    DBSession.remove()
-    DBSession.configure(bind=None)
+    sync_edw.get_all_datasets(testapp)
+    assert(len(sync_edw.experiments) == 11)
+    assert(len(sync_edw.datasets) == 1)
 
-    from encoded import main
-    app = main({}, **app_settings)
+    assert(len(sync_edw.encode2_to_encode3.keys()) == 4)
+    assert(len(sync_edw.encode3_to_encode2.keys()) == 11)
 
-    from encoded.commands import create_mapping
-    create_mapping.run(app)
-    res = app.post_json('/index', {})
+    assert not sync_edw.encode3_to_encode2.get(edw_test_data.encode3, False)
 
-    @request.addfinalizer
-    def teardown_app():
-        # Dispose connections so postgres can tear down
-        DBSession.bind.pool.dispose()
-        DBSession.remove()
-        DBSession.configure(bind=None)
+    # Create hash of all ENCODE 2 experiments, map to ENCODE 3 accession
+    assert sorted(sync_edw.encode2_to_encode3.keys()) == sorted(edw_test_data.encode2)
 
-    return app
-'''
-
-@pytest.fixture
-def testapp(app):
-    from webtest import TestApp
-    environ = {
-        'HTTP_ACCEPT': 'application/json',
-        'REMOTE_USER': 'TEST',
-    }
-    return TestApp(app, environ)
-
-
-#@pytest.yield_fixture(scope='session')
-@pytest.yield_fixture()
-def insert_workbook(connection, app, app_settings):
-    from . import conftest
-    from encoded.commands import es_index_data, create_mapping
-    tx = connection.begin_nested()
-    for fixture in conftest.workbook(connection, app, app_settings):
-        print "SYNC: creating ES and indexing"
-        create_mapping.run(app)
-        es_index_data.run(app)
-        yield fixture
-    print 'SYNC: Rollback from sync workbook...'
-    tx.rollback()
-
-@pytest.yield_fixture()
-def reset(connection, app):
-    yield
-    from encoded.commands import es_index_data, create_mapping
-    print "SYNC: Resetting ES index"
-    create_mapping.run(app)
-    es_index_data.run(app)
 
 @pytest.mark.slow
 def test_format_app_fileinfo_expanded(workbook, testapp):
@@ -119,6 +68,7 @@ def test_post_duplicate(workbook, testapp):
 def test_list_new(workbook, testapp):
     # Test obtaining list of 'new' accessions (at EDW, not at app)
     # Unexpanded JSON (requires GETs on embedded URLs)
+    # TODO should be modified to look up by date
 
     edw_accs = edw_test_data.new_in
     app_accs = sync_edw.get_app_fileinfo(testapp)
@@ -126,7 +76,7 @@ def test_list_new(workbook, testapp):
     assert new_accs == sorted(edw_test_data.new_out)
 
 @pytest.mark.slow
-def test_import_file(insert_workbook, testapp, reset):
+def test_import_file(workbook, testapp):
     # Test import of new file to encoded
     # this tests adds replicates, but never checks their validity
     # ignoring this because I don't want to deal with tearing down ES  posts
@@ -154,23 +104,7 @@ def test_import_file(insert_workbook, testapp, reset):
             assert(not fileinfo['biological_replicate'] or not converted_file['technical_replicate'])
 
 
-def test_encode2_experiments(workbook, testapp):
-    # Test obtaining list of ENCODE 2 experiments and identifying which ENCODE3
-    # accessions are ENCODE2 experiments
-
-    # Test identifying an ENCODE 3 experiment
-    #res = testapp.post_json('/index', {})
-    assert not sync_edw.is_encode2_experiment(testapp, edw_test_data.encode3)
-
-    # Create hash of all ENCODE 2 experiments, map to ENCODE 3 accession
-    encode2_hash = sync_edw.get_encode2_to_encode3(testapp)
-    assert sorted(encode2_hash.keys()) == sorted(edw_test_data.encode2)
-
-    # Test identifying an ENCODE 2 experiment
-    assert sync_edw.is_encode2_experiment(testapp, encode2_hash.values()[0])
-
-
-def test_encode3_experiments(insert_workbook, testapp, reset):
+def test_encode3_experiments(workbook, testapp):
     # Test obtaining list of ENCODE 2 experiments and identifying which ENCODE3
     # accessions are ENCODE2 experiments
 
@@ -194,7 +128,7 @@ def test_encode3_experiments(insert_workbook, testapp, reset):
     assert len(app_files_p3) == 14
 
 @pytest.mark.slow
-def test_file_sync(insert_workbook, testapp, reset):
+def test_file_sync(workbook, testapp):
 
     import re
     mock_edw_file = 'edw_file_mock.tsv'
@@ -247,7 +181,6 @@ def test_file_sync(insert_workbook, testapp, reset):
             assert(True)
     '''
     # Thought this should have thrown a 409... assert(resp.status_code == 409)
-
     for update in patch:
         diff = sync_edw.compare_files(app_dict[update], edw_mock[update])
         patched = sync_edw.patch_fileinfo(testapp, diff.keys(), edw_mock[update])
@@ -260,9 +193,6 @@ def test_file_sync(insert_workbook, testapp, reset):
         else:
             assert patched
 
-    # index new replicates
-    from encoded.commands import es_index_data
-    es_index_data.run(testapp.app, ['replicate', 'experiment', 'dataset','file'])
 
     post_app_files = sync_edw.get_app_fileinfo(testapp)
     post_app_dict = { d['accession']:d for d in post_app_files }
@@ -299,9 +229,7 @@ def test_file_sync(insert_workbook, testapp, reset):
     assert(len(new_reps) == 2)
 
     #TODO could maybe add a test to make sure that a file belonging to a dataset ends up with the right dataset
-    #TODO might be nice to test phase filtering
     #TODO tests for experiments with multiple mappings.
-
 
 
 
