@@ -58,6 +58,26 @@ encode3_to_encode2 = {}    # Cache experiment ENCODE 2 ref lists
 experiments = {}
 datasets = {}
 
+
+class Summary(object):
+    ''' holds summary infomation to put output at the end '''
+    def __init__(self):
+        self.total_encoded_files = 0
+        self.total_edw_files = 0
+        self.total_encoded_exps = 0
+        self.total_encoded_ds = 0
+        self.edw_only_files = 0
+        self.encoded_only_files = 0
+        self.identical_files =0
+        self.diff_files = 0
+        self.files_posted = 0
+        self.replicates_posted = 0
+        self.files_patched = 0
+        self.warning_count = {}
+        self.error_count = {}
+
+summary = Summary()
+
 def convert_edw(app, file_dict, phase=edw_file.ENCODE_PHASE_ALL):
     ''' converts EDW file structure to encoded object'''
 
@@ -564,14 +584,24 @@ def main():
 
 
     app = make_app(args.config_uri, args.username, args.password)
+    edw = edw_file.make_edw(args.data_host)
+
+    try:
+        edw.connect()
+    except Exception, e:
+        logger.error("Could not connect to: %s; aborting" % args.data_host)
+        logger.error("%s", e)
+        sys.exit(1)
 
     get_all_datasets(app)
-
-    edw = edw_file.make_edw(args.data_host)
+    summary.total_encoded_exps = len(experiments.keys())
+    summary.total_encoded_ds = len(datasets.keys())
 
     edw_files, app_files = get_dicts(app, edw, phase=args.phase)
 
-    logger.warning("Found %s files at encoded; %s files at EDW" % (len(app_files), len(edw_files)))
+    summary.total_encoded_files = len(app_files)
+    summary.total_edw_files = len(edw_files)
+    logger.warning("Found %s files at encoded; %s files at EDW" % (summary.total_encoded_files, summary.total_edw_files))
     if args.phase != edw_file.ENCODE_PHASE_ALL:
         logger.warning("Synching files from Phase %s only" % args.phase)
 
