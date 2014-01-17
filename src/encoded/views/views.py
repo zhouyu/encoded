@@ -547,6 +547,7 @@ class Experiments(Collection):
         ('files.length', 'Files'),
         ('lab.title', 'Lab'),
         ('encode2_dbxrefs', 'Dbxrefs')
+        ('award.project', 'Project'),
     ])
 
     class Item(Collection.Item):
