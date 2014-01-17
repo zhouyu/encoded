@@ -502,11 +502,6 @@ class Item(object):
         current_version = properties.get('schema_version', '')
         target_version = self.schema_version
         if target_version is not None and current_version != target_version:
-<<<<<<< .merge_file_yAaI7x
-            properties = request.upgrade(
-                self.item_type, properties, current_version, target_version,
-                context=self)
-=======
             try:
                 properties = request.upgrade(
                     self.item_type, properties, current_version, target_version,
@@ -515,7 +510,6 @@ class Item(object):
                 logger.exception('Unable to upgrade %s%s from %r to %r',
                     request.resource_path(self.__parent__), self.uuid,
                     current_version, target_version)
->>>>>>> .merge_file_8YGIaO
         return properties
 
     def __json__(self, request):

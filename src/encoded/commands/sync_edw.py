@@ -388,7 +388,7 @@ def get_all_datasets(app, phase=edw_file.ENCODE_PHASE_ALL):
 
         datasets[acc] = ds
         ## don't need replicates or anything.
-    logger.warn("%s Encode2 experiments can be references" % len(encode2_to_encode3.keys()))
+    logger.warn("%s Encode2 experiments can be referenced" % len(encode2_to_encode3.keys()))
 
 def patch_fileinfo(app, props, propinfo, dry_run=False):
     # PATCH properties to file in app
