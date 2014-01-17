@@ -546,7 +546,7 @@ class Experiments(Collection):
         ('replicates.length', 'Replicates'),
         ('files.length', 'Files'),
         ('lab.title', 'Lab'),
-        ('encode2_dbxrefs', 'Dbxrefs')
+        ('encode2_dbxrefs', 'Dbxrefs'),
         ('award.project', 'Project'),
     ])
 
