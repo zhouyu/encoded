@@ -595,13 +595,13 @@ def run(app, app_files, edw_files, phase=edw_file.ENCODE_PHASE_ALL, dry_run=Fals
 
     total_errors = 0
     for err in summary.error_count.keys():
-        logger.warn("SUMMARY: %s errors of type: %s" % (self.error_count[err], err))
-        total_errors = self.error_count[err] + total_errors
+        logger.warn("SUMMARY: %s errors of type: %s" % (summary.error_count[err], err))
+        total_errors = summary.error_count[err] + total_errors
 
     total_warnings = 0
     for warn in summary.warning_count.keys():
-        logger.warn("SUMMARY: %s warnings of type: %s" % (self.warning_count[err], err))
-        total_warnings = self.warning_count[err] + total_warnings
+        logger.warn("SUMMARY: %s warnings of type: %s" % (summary.warning_count[warn], warn))
+        total_warnings = summary.warning_count[warn] + total_warnings
 
     logger.warn("SUMMARY: %s total errors, %s total warnings" % (total_errors, total_warnings))
 
