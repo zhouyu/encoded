@@ -8,6 +8,8 @@ import encoded.commands.sync_edw as sync_edw
 import edw_test_data
 import test_indexing
 
+from test_views import TYPE_LENGTH
+
 pytestmark = [pytest.mark.edw_sync]
 
 # globals
@@ -20,11 +22,11 @@ TEST_ACCESSION = 'ENCFF001RET'  # NOTE: must be in test set
 def test_get_all_datasets(workbook,testapp):
 
     sync_edw.get_all_datasets(testapp)
-    assert(len(sync_edw.experiments) == 11)
-    assert(len(sync_edw.datasets) == 1)
+    assert(len(sync_edw.experiments) == TYPE_LENGTH['experiment'])
+    assert(len(sync_edw.datasets) == TYPE_LENGTH['dataset'])
 
     assert(len(sync_edw.encode2_to_encode3.keys()) == 4)
-    assert(len(sync_edw.encode3_to_encode2.keys()) == 11)
+    assert(len(sync_edw.encode3_to_encode2.keys()) == 12)
 
     assert not sync_edw.encode3_to_encode2.get(edw_test_data.encode3, False)
 
@@ -85,7 +87,7 @@ def test_import_file(workbook, testapp):
 
 
     input_file = 'import_in.1.tsv'
-    f = open(EDW_FILE_TEST_DATA_DIR + '/' + input_file)
+    f = open(EDW_FILE_TEST_DATA_DIR + '/' + input_file, 'rU')
     reader = DictReader(f, delimiter='\t')
 
     sync_edw.get_all_datasets(testapp)
@@ -116,7 +118,7 @@ def test_encode3_experiments(workbook, testapp):
     # Test identifying an ENCODE 3 experiment
     #res = testapp.post_json('/index', {})
     mock_edw_file = 'edw_file_mock.tsv'
-    f = open(EDW_FILE_TEST_DATA_DIR + '/' + mock_edw_file)
+    f = open(EDW_FILE_TEST_DATA_DIR + '/' + mock_edw_file, 'rU')
     reader = DictReader(f, delimiter='\t')
 
     sync_edw.get_all_datasets(testapp)
@@ -128,11 +130,11 @@ def test_encode3_experiments(workbook, testapp):
             converted_file.pop('test', None) # this is in the file for notation purposes only
             edw_mock_p3[fileinfo['accession']] = converted_file
 
-    assert len(edw_mock_p3) == 10
+    assert len(edw_mock_p3) == 12
 
     app_files_p3 = sync_edw.get_app_fileinfo(testapp, phase='3')
 
-    assert len(app_files_p3) == 14
+    assert len(app_files_p3) == 16
 
 @pytest.mark.slow
 def test_file_sync(workbook, testapp):
@@ -141,29 +143,30 @@ def test_file_sync(workbook, testapp):
 
     sync_edw.get_all_datasets(testapp)
     mock_edw_file = 'edw_file_mock.tsv'
-    f = open(EDW_FILE_TEST_DATA_DIR + '/' + mock_edw_file)
+    f = open(EDW_FILE_TEST_DATA_DIR + '/' + mock_edw_file, 'rU')
     reader = DictReader(f, delimiter='\t')
 
     edw_mock = {}
     test = {}
+    filecount = 0
     for fileinfo in reader:
+        filecount = filecount+1
         converted_file = sync_edw.convert_edw(testapp, fileinfo)
         test[fileinfo['accession']] = converted_file.pop('test', None) # this is in the file for notation purposes only
         edw_mock[fileinfo['accession']] = converted_file
 
-    assert len(edw_mock) == 30
+    assert len(edw_mock) == filecount
 
     app_files = sync_edw.get_app_fileinfo(testapp)
     app_dict = { d['accession']:d for d in app_files }
-    assert len(app_files) == 24  ## just a place holder, could use TYPE_LENGTH from test_views.py
-    # this is puzzling because it should not have the 2 from the previous test, should it?
+    assert len(app_files) == TYPE_LENGTH['file']
     assert(len(app_files) == len(app_dict.keys())) # this should never duplicate
 
     edw_only, app_only, same, patch = sync_edw.inventory_files(testapp, edw_mock, app_dict)
     assert len(edw_only) == 15
     assert len(app_only) == 11
     assert len(same) == 6
-    assert len(patch) == 5
+    assert len(patch) == 7
 
     before_reps = { d['uuid']: d for d in testapp.get('/replicates/').maybe_follow().json['@graph'] }
 
@@ -212,10 +215,13 @@ def test_file_sync(workbook, testapp):
     post_edw, post_app, post_same, post_patch= sync_edw.inventory_files(testapp, edw_mock, post_app_dict)
     assert len(post_edw) == 1
     assert len(post_app) == 11 # unchanged
-    assert len(post_patch) == 2 # exsting files cannot be patched
+    assert len(post_patch) == 3 # exsting files cannot be patched
     assert ((len(post_same)-len(same)) == (len(patch) -len(post_patch) + (len(edw_only) - len(post_edw))))
     assert len(post_app_files) == (len(app_files) + len(edw_only) - len(post_edw))
 
+    user_patched = testapp.get('/files/ENCFF001RIC').maybe_follow().json
+    assert(user_patched['submitted_by'] == u'/users/f5b7857d-208e-4acc-ac4d-4c2520814fe1/')
+    assert(user_patched['status'] == u'OBSOLETE')
 
     after_reps = { d['uuid']: d for d in testapp.get('/replicates/').maybe_follow().json['@graph'] }
     same_reps = {}
@@ -233,7 +239,7 @@ def test_file_sync(workbook, testapp):
         else:
             new_reps[uuid] = after_reps[uuid]
 
-    assert(len(same_reps.keys()) == 20)
+    assert(len(same_reps.keys()) == 21)
     assert(not updated_reps)
     assert(len(new_reps) == 2)
 

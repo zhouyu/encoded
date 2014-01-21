@@ -95,9 +95,9 @@ def convert_edw(app, file_dict, phase=edw_file.ENCODE_PHASE_ALL):
 
 
     if (file_dict['lab_error_message'] or file_dict['edw_error_message'] ):
-        file_dict['status'] = 'OBSOLETE'
+        file_dict['status'] = u'OBSOLETE'
     else:
-        file_dict['status'] = 'CURRENT'
+        file_dict['status'] = u'CURRENT'
 
     del file_dict['lab_error_message']
     del file_dict['edw_error_message']
@@ -105,7 +105,7 @@ def convert_edw(app, file_dict, phase=edw_file.ENCODE_PHASE_ALL):
     if file_dict['file_format'] in ['fasta', 'fastq']:
         del file_dict['assembly']
 
-    resp = app.get('/users/'+file_dict['submitted_by'],headers={'Accept': 'application/json'}).maybe_follow()
+    resp = app.get('/users/'+file_dict['submitted_by'], status=[200, 301, 404]).maybe_follow()
     if not file_dict['submitted_by'] or resp.status_code != 200:
         msg = "EDW submitter not found"
         summary.error_count[msg] = summary.error_count.get(msg,0) + 1
@@ -552,7 +552,7 @@ def inventory_files(app, edw_dict, app_dict):
             diff = compare_files(edw_fileinfo, app_dict[accession])
             if diff:
                 diff_accessions.append(accession)
-                logger.warn("File: %s has %s DIFFS - will PATCH if valid" % (accession, diff))
+                logger.warn("File: %s has %s DIFFS (EDW, encoded) - PATCH if valid" % (accession, diff))
             else:
                 same.append(edw_fileinfo)
 
