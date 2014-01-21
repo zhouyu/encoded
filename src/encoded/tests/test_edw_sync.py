@@ -26,7 +26,7 @@ def test_get_all_datasets(workbook,testapp):
     assert(len(sync_edw.datasets) == TYPE_LENGTH['dataset'])
 
     assert(len(sync_edw.encode2_to_encode3.keys()) == 4)
-    assert(len(sync_edw.encode3_to_encode2.keys()) == 12)
+    assert(len(sync_edw.encode3_to_encode2.keys()) == 13)
 
     assert not sync_edw.encode3_to_encode2.get(edw_test_data.encode3, False)
 
@@ -166,7 +166,7 @@ def test_file_sync(workbook, testapp):
     assert len(edw_only) == 15
     assert len(app_only) == 11
     assert len(same) == 6
-    assert len(patch) == 7
+    assert len(patch) == 6
 
     before_reps = { d['uuid']: d for d in testapp.get('/replicates/').maybe_follow().json['@graph'] }
 
