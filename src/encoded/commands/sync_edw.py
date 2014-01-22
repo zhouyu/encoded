@@ -143,6 +143,10 @@ def convert_edw(app, file_dict, phase=edw_file.ENCODE_PHASE_ALL):
         ## HACK - these should not be allowed in EDW
         file_dict['assembly'] = re.sub(r'(male\.|female\.)', '', file_dict['assembly'])
 
+    if file_dict.has_key('paired_end') and not file_dict['paired_end']:
+        del file_dict['paired_end']
+        # treat '' as null.
+
     return file_dict  ## really don't convert None to unicode...
     #return { i : unicode(j) for i,j in file_dict.items() }
 

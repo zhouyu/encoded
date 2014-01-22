@@ -267,6 +267,7 @@ def get_edw_fileinfo(edw, limit=None, experiment=True, start_id=0,
                     v.c.ucscDb.label('assembly'),
                     f.c.md5.label('md5sum'),
                     u.c.email.label('submitted_by'),
+                    v.c.pairedEnd.label('paired_end'),
                     # either of these two error fields will cause status to be OBSOLETE
                     f.c.deprecated.label('lab_error_message'),
                     f.c.errorMessage.label('edw_error_message')])
