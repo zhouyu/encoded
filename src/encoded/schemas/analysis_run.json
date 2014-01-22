@@ -102,7 +102,7 @@
             "type": "array",
             "default": [],
             "items": {
-                "title": "Input",
+                "title": "Output",
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
